@@ -54,8 +54,8 @@ ROWS.append(("band", "中心命題 ── 無駄とは“労力を二度払う�
 ROWS.append(("para", C.THESIS))
 ROWS.append(("band", "スコープ（扱う／扱わない）"))
 ROWS.append(("para_sub", C.SCOPE))
-ROWS.append(("band", "再現性の構成4要件（いずれの欠落も“二度払い”を生む）"))
-for req, one, lack, mine, field in C.REQS:
+ROWS.append(("band", "無駄になりやすい4つの軸（どれかが欠けると作り直しになる）"))
+for req, one, lack, mine in C.REQS:
     ROWS.append(("req", (req, one, lack)))
 ROWS.append(("band", "上位目的への接続（残業削減は結果指標）"))
 ROWS.append(("logic", "　→　".join(C.LOGIC)))

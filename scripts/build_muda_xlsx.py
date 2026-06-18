@@ -125,20 +125,23 @@ ws2.sheet_view.showGridLines = False
 cols2 = [("A", 14), ("B", 22), ("C", 34), ("D", 40), ("E", 40)]
 for col, w in cols2:
     ws2.column_dimensions[col].width = w
-r = title_block(ws2, "再現性の構成4要件", "いずれの欠落も“二度払い”を生む。分類ではなく、再現性を成り立たせる要件。", "E", 5)
-heads = ["要件", "一言でいうと", "欠落すると（どの二度払い）", "自分の業務での現れ（構造の層）", "現場・朝会での現れ"]
+r = title_block(ws2, "無駄になりやすい4つの軸", "どれかが欠けると作り直し（二度払い）になる。右は自分の業務での具体例。", "E", 5)
+heads = ["軸", "問い（一言）", "欠けると（どの二度払い）", "私の業務での具体例"]
+ws2.merge_cells(f"D{r}:E{r}")
 for i, h in enumerate(heads):
     c = ws2.cell(r, 1 + i, h)
     c.font = Font(name=FONT, size=9.5, bold=True, color=INK)
     c.fill = fill(HEADER_FILL)
     c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
     c.border = Border(left=thin, right=thin, top=thin, bottom=med)
+ws2.cell(r, 5).border = Border(left=thin, right=thin, top=thin, bottom=med)
 ws2.row_dimensions[r].height = 26
 r += 1
-cpls = [10, 16, 26, 30, 30]
-for req, one, lack, mine, field in C.REQS:
-    vals = [req, one, lack, mine, field]
+cpls = [12, 18, 24, 64]
+for req, one, lack, mine in C.REQS:
+    vals = [req, one, lack, mine]
     maxlines = 1
+    ws2.merge_cells(f"D{r}:E{r}")
     for i, v in enumerate(vals):
         c = ws2.cell(r, 1 + i, v)
         bold = (i == 0)
@@ -147,6 +150,7 @@ for req, one, lack, mine, field in C.REQS:
         c.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True, indent=1)
         c.border = border
         maxlines = max(maxlines, est_lines(v, cpls[i]))
+    ws2.cell(r, 5).border = border
     ws2.row_dimensions[r].height = maxlines * 13 + 7
     r += 1
 
@@ -156,7 +160,7 @@ ws3.sheet_view.showGridLines = False
 w3 = [("A", 46), ("B", 10), ("C", 8), ("D", 8), ("E", 8), ("F", 44)]
 for col, w in w3:
     ws3.column_dimensions[col].width = w
-r = title_block(ws3, "無駄の見える化マップ", "主語は“業務”でなく“状態”。優先度＝規模×容易性で着手対象を絞る。", "F", 6)
+r = title_block(ws3, "無駄の見える化マップ（自分の振り返り）", "実際の業務で起きた“二度払い”。優先度＝規模×直しやすさで着手対象を絞る。", "F", 6)
 for i, h in enumerate(C.MAP_COLS):
     c = ws3.cell(r, 1 + i, h)
     c.font = Font(name=FONT, size=9, bold=True, color=INK)
@@ -179,7 +183,8 @@ for row in C.MAP_ROWS:
     ws3.row_dimensions[r].height = maxlines * 13 + 8
     r += 1
 r += 1
-r = para(ws3, r, "最初の1アクション：" + C.FIRST_ACTION, "F", cpl=128, bold=True)
+r = para(ws3, r, "無駄の正体：" + C.MUDA_CORE, "F", cpl=128, bold=True)
+r = para(ws3, r, "最初の一手：" + C.FIRST_ACTION, "F", cpl=128)
 
 # ========== シート4：診断チェックリスト ==========
 ws4 = wb.create_sheet("診断チェックリスト")
