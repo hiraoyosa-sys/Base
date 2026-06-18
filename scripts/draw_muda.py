@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-"""業務効率化／無駄の見える化 ── 1枚サマリPNG（無駄の型リスト版）。
+"""業務効率化／無駄の見える化 ── 1枚サマリPNG（段階構成版）。
 
-配色はモノクロ（白地・黒文字・細罫線・見出しは薄グレー）で content 系と統一。
+木村さんのお題 → 定義を開く → 自分ごと（型・基盤がない業務） → 対策の方向。
+配色はモノクロ（白地・黒文字・細罫線・見出しは薄グレー）。
 """
 import os
 from PIL import Image, ImageDraw, ImageFont
@@ -16,17 +17,16 @@ def F(sz):
     return ImageFont.truetype(FONT_PATH, sz * S)
 
 WHITE = (255, 255, 255); HEADER = (230, 230, 230); LABEL = (242, 242, 242)
-SUB = (247, 247, 247); INK = (0, 0, 0); SUB_INK = (64, 64, 64)
-LINE = (128, 128, 128); RULE = (89, 89, 89)
+INK = (0, 0, 0); SUB_INK = (64, 64, 64); LINE = (128, 128, 128); RULE = (89, 89, 89)
 
 f_title = F(16); f_sub = F(9); f_band = F(11); f_lbl = F(9); f_body = F(9)
 
 PAD = 16
 W = 1040
 LH = 15
-LBL_W = 150          # 型名列
-STATE_W = 330        # 状態列
-EX_W = W - PAD * 2 - LBL_W - STATE_W  # 例＋対策列
+AREA_W = 150
+STATE_W = 430
+CO_W = W - PAD * 2 - AREA_W - STATE_W
 
 _tmp = Image.new("RGB", (10, 10)); _d = ImageDraw.Draw(_tmp)
 
@@ -50,24 +50,26 @@ def block_h(text, font, maxw, padv=7):
     return len(wrap(_d, text, font, maxw)) * LH + padv * 2
 
 
-# ---- 行データ（型ごと）----
+odai = "・" + "\n・".join(C.ODAI)
+defo = "・" + "\n・".join(C.DEF_OPEN)
+tais = "・" + "\n・".join(C.TAISAKU)
+odai_h = block_h(odai, f_body, W - PAD * 2 - 12)
+defo_h = block_h(defo, f_body, W - PAD * 2 - 12)
+tais_h = block_h(tais, f_body, W - PAD * 2 - 12)
+
 rows = []
-for label, cat, state, examples, counter in C.MUDA_TYPES:
-    ex = "例：" + " ／ ".join(examples)
-    co = "→対策：" + counter
-    rh = max(block_h(label + "\n(" + cat + ")", f_lbl, LBL_W - 12),
+for area, state, counter in C.JIBUN:
+    rh = max(block_h(area, f_lbl, AREA_W - 12),
              block_h(state, f_body, STATE_W - 12),
-             block_h(ex + "\n" + co, f_body, EX_W - 12), 34)
-    rows.append((label, cat, state, ex, co, rh))
+             block_h(counter, f_body, CO_W - 12), 30)
+    rows.append((area, state, counter, rh))
 
-intro_text = "・" + "\n・".join(C.INTRO)
-intro_h = block_h(intro_text, f_body, W - PAD * 2 - 12)
-common_h = block_h(C.COMMON, f_body, W - PAD * 2 - 12)
-
-title_h, sub_h, gap, band_h = 26, 26, 6, 24
-H = (PAD + title_h + sub_h + 6 + band_h + intro_h + gap
-     + band_h + 24 + sum(r[5] for r in rows)  # 型ヘッダ + 行
-     + gap + band_h + common_h + PAD)
+title_h, sub_h, gap, band_h, hdr_h = 26, 26, 6, 24, 22
+H = (PAD + title_h + sub_h + 6
+     + band_h + odai_h + gap
+     + band_h + defo_h + gap
+     + band_h + hdr_h + sum(r[3] for r in rows) + gap
+     + band_h + tais_h + PAD)
 
 img = Image.new("RGB", (W * S, H * S), WHITE)
 d = ImageDraw.Draw(img)
@@ -90,6 +92,18 @@ def text_block(x, y0, w, h, text, font, color, align="left", valign="top", bold=
         ty += LH
 
 
+def draw_band(y, text):
+    rect(PAD, y, W - PAD, y + band_h, HEADER)
+    text_block(PAD, y, W - PAD * 2, band_h, text, f_band, INK, valign="center", bold=True)
+    return y + band_h
+
+
+def draw_bullets(y, text, h):
+    rect(PAD, y, W - PAD, y + h, WHITE)
+    text_block(PAD, y, W - PAD * 2 - 6, h, text, f_body, INK)
+    return y + h
+
+
 y = PAD
 d.text((PAD * S, y * S), C.TITLE, font=f_title, fill=INK)
 y += title_h
@@ -98,46 +112,33 @@ y += sub_h
 d.line([(PAD * S, y * S), ((W - PAD) * S, y * S)], fill=RULE, width=2)
 y += 6
 
-# 冒頭の考え
-rect(PAD, y, W - PAD, y + band_h, HEADER)
-text_block(PAD, y, W - PAD * 2, band_h, "無駄とは何か（私の考え）", f_band, INK, valign="center", bold=True)
-y += band_h
-rect(PAD, y, W - PAD, y + intro_h, WHITE)
-text_block(PAD, y, W - PAD * 2 - 6, intro_h, intro_text, f_body, INK)
-y += intro_h + gap
+y = draw_band(y, "木村さんのお題（6/17 朝会）")
+y = draw_bullets(y, odai, odai_h) + gap
+y = draw_band(y, "定義をもう少し開くと")
+y = draw_bullets(y, defo, defo_h) + gap
 
-# 型一覧バンド
-rect(PAD, y, W - PAD, y + band_h, HEADER)
-text_block(PAD, y, W - PAD * 2, band_h, "自分の業務に見る“無駄の型”（過去〜直近・複数PJ／1個に絞らない）", f_band, INK, valign="center", bold=True)
-y += band_h
-# 列見出し
+y = draw_band(y, "自分ごとに落とすと：再現性がない＝「型・基盤」がなく毎回ゼロから")
 x = PAD
-for w, t in [(LBL_W, "型／カテゴリ"), (STATE_W, "どういう状態が無駄か"), (EX_W, "実体験の例 ＋ 対策の方向")]:
-    rect(x, y, x + w, y + 24, LABEL)
-    text_block(x, y, w, 24, t, f_lbl, INK, align="center", valign="center", bold=True)
+for w, t in [(AREA_W, "領域"), (STATE_W, "どういう状態が無駄か（型・基盤がない）"), (CO_W, "対策の方向")]:
+    rect(x, y, x + w, y + hdr_h, LABEL)
+    text_block(x, y, w, hdr_h, t, f_lbl, INK, align="center", valign="center", bold=True)
     x += w
-y += 24
-# 行
-for label, cat, state, ex, co, rh in rows:
+y += hdr_h
+for area, state, counter, rh in rows:
     x = PAD
-    rect(x, y, x + LBL_W, y + rh, LABEL)
-    text_block(x, y, LBL_W, rh, label + "\n(" + cat + ")", f_lbl, INK, valign="center", bold=True)
-    x += LBL_W
+    rect(x, y, x + AREA_W, y + rh, LABEL)
+    text_block(x, y, AREA_W, rh, area, f_lbl, INK, valign="center", bold=True)
+    x += AREA_W
     rect(x, y, x + STATE_W, y + rh, WHITE)
-    text_block(x, y, STATE_W, rh, state, f_body, INK)
+    text_block(x, y, STATE_W, rh, state, f_body, SUB_INK)
     x += STATE_W
-    rect(x, y, x + EX_W, y + rh, WHITE)
-    text_block(x, y, EX_W, rh, ex + "\n" + co, f_body, SUB_INK)
+    rect(x, y, x + CO_W, y + rh, WHITE)
+    text_block(x, y, CO_W, rh, counter, f_body, INK)
     y += rh
 y += gap
 
-# 共通点
-rect(PAD, y, W - PAD, y + band_h, HEADER)
-text_block(PAD, y, W - PAD * 2, band_h, "強いて共通点を言えば（※1個直せば終わり、ではない）", f_band, INK, valign="center", bold=True)
-y += band_h
-rect(PAD, y, W - PAD, y + common_h, WHITE)
-text_block(PAD, y, W - PAD * 2 - 6, common_h, C.COMMON, f_body, INK)
-y += common_h
+y = draw_band(y, "対策の方向（再現性を上げる）")
+y = draw_bullets(y, tais, tais_h)
 
 path = os.path.join(OUT, "無駄の見える化_1枚サマリ.png")
 img.save(path)
