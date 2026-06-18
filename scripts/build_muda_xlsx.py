@@ -127,7 +127,7 @@ for label, state, example, counter in C.SUSUME:
 r += 1
 
 # 自分ごと B：仕組み（型・基盤）の無駄（3列＝領域/状態/対策）
-r = band(r, "自分ごとに落とすと ②：仕組み（型・基盤）の無駄（毎回ゼロから・属人）")
+r = band(r, "自分ごとに落とすと ②：仕組み（型・基盤）の無駄（毎回ゼロから・その人頼み）")
 heads = ["領域", "どういう状態が無駄か（型・基盤がない）", "対策の方向（型・基盤を整備）"]
 for i, h in enumerate(heads):
     c = ws.cell(r, 1 + i, h)
