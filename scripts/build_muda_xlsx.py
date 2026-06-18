@@ -97,9 +97,38 @@ r += 1
 r = band(r, "定義をもう少し開くと")
 r = bullets(r, C.DEF_OPEN)
 r += 1
-# 自分ごと（表）
-r = band(r, "自分ごとに落とすと：再現性がない＝「型・基盤」がなく毎回ゼロから")
-heads = ["領域", "どういう状態が無駄か（型・基盤がない）", "対策の方向（再現性を上げる）"]
+# 自分ごと A：進め方の無駄（4列＝型/状態/例/対策）
+r = band(r, "自分ごとに落とすと ①：進め方の無駄（どう動くか）")
+headsA = ["型", "どういう状態が無駄か", "実体験の例", "対策の方向"]
+# A表は B列を 状態、C列を 例＋対策にまとめて3列構成で表現（列数を抑える）
+heads = ["型", "どういう状態が無駄か", "例 ＋ 対策の方向"]
+for i, h in enumerate(heads):
+    c = ws.cell(r, 1 + i, h)
+    c.font = Font(name=FONT, size=9.5, bold=True, color=INK)
+    c.fill = fill(HEADER_FILL)
+    c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    c.border = Border(left=thin, right=thin, top=thin, bottom=med)
+ws.row_dimensions[r].height = 24
+r += 1
+cplsA = [20, 50, 46]
+for label, state, example, counter in C.SUSUME:
+    excol = "例：" + example + "\n→対策：" + counter
+    vals = [label, state, excol]
+    maxlines = 1
+    for i, v in enumerate(vals):
+        c = ws.cell(r, 1 + i, v)
+        c.font = Font(name=FONT, size=9, bold=(i == 0), color=INK if i != 1 else SUB_INK)
+        c.fill = fill(LABEL_FILL if i == 0 else WHITE)
+        c.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True, indent=1)
+        c.border = border
+        maxlines = max(maxlines, est_lines(v, cplsA[i]))
+    ws.row_dimensions[r].height = maxlines * 13 + 8
+    r += 1
+r += 1
+
+# 自分ごと B：仕組み（型・基盤）の無駄（3列＝領域/状態/対策）
+r = band(r, "自分ごとに落とすと ②：仕組み（型・基盤）の無駄（毎回ゼロから・属人）")
+heads = ["領域", "どういう状態が無駄か（型・基盤がない）", "対策の方向（型・基盤を整備）"]
 for i, h in enumerate(heads):
     c = ws.cell(r, 1 + i, h)
     c.font = Font(name=FONT, size=9.5, bold=True, color=INK)
@@ -109,7 +138,7 @@ for i, h in enumerate(heads):
 ws.row_dimensions[r].height = 24
 r += 1
 cpls = [20, 46, 42]
-for area, state, counter in C.JIBUN:
+for area, state, counter in C.SHIKUMI:
     vals = [area, state, counter]
     maxlines = 1
     for i, v in enumerate(vals):

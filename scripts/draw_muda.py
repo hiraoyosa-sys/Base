@@ -57,18 +57,29 @@ odai_h = block_h(odai, f_body, W - PAD * 2 - 12)
 defo_h = block_h(defo, f_body, W - PAD * 2 - 12)
 tais_h = block_h(tais, f_body, W - PAD * 2 - 12)
 
-rows = []
-for area, state, counter in C.JIBUN:
+# A：進め方の無駄（型／状態／例＋対策）
+rowsA = []
+for label, state, example, counter in C.SUSUME:
+    co = "例：" + example + "\n→対策：" + counter
+    rh = max(block_h(label, f_lbl, AREA_W - 12),
+             block_h(state, f_body, STATE_W - 12),
+             block_h(co, f_body, CO_W - 12), 30)
+    rowsA.append((label, state, co, rh))
+
+# B：仕組み（領域／状態／対策）
+rowsB = []
+for area, state, counter in C.SHIKUMI:
     rh = max(block_h(area, f_lbl, AREA_W - 12),
              block_h(state, f_body, STATE_W - 12),
              block_h(counter, f_body, CO_W - 12), 30)
-    rows.append((area, state, counter, rh))
+    rowsB.append((area, state, counter, rh))
 
 title_h, sub_h, gap, band_h, hdr_h = 26, 26, 6, 24, 22
 H = (PAD + title_h + sub_h + 6
      + band_h + odai_h + gap
      + band_h + defo_h + gap
-     + band_h + hdr_h + sum(r[3] for r in rows) + gap
+     + band_h + hdr_h + sum(r[3] for r in rowsA) + gap
+     + band_h + hdr_h + sum(r[3] for r in rowsB) + gap
      + band_h + tais_h + PAD)
 
 img = Image.new("RGB", (W * S, H * S), WHITE)
@@ -117,25 +128,32 @@ y = draw_bullets(y, odai, odai_h) + gap
 y = draw_band(y, "定義をもう少し開くと")
 y = draw_bullets(y, defo, defo_h) + gap
 
-y = draw_band(y, "自分ごとに落とすと：再現性がない＝「型・基盤」がなく毎回ゼロから")
-x = PAD
-for w, t in [(AREA_W, "領域"), (STATE_W, "どういう状態が無駄か（型・基盤がない）"), (CO_W, "対策の方向")]:
-    rect(x, y, x + w, y + hdr_h, LABEL)
-    text_block(x, y, w, hdr_h, t, f_lbl, INK, align="center", valign="center", bold=True)
-    x += w
-y += hdr_h
-for area, state, counter, rh in rows:
+def draw_table(y, band_text, col_titles, table_rows):
+    y = draw_band(y, band_text)
     x = PAD
-    rect(x, y, x + AREA_W, y + rh, LABEL)
-    text_block(x, y, AREA_W, rh, area, f_lbl, INK, valign="center", bold=True)
-    x += AREA_W
-    rect(x, y, x + STATE_W, y + rh, WHITE)
-    text_block(x, y, STATE_W, rh, state, f_body, SUB_INK)
-    x += STATE_W
-    rect(x, y, x + CO_W, y + rh, WHITE)
-    text_block(x, y, CO_W, rh, counter, f_body, INK)
-    y += rh
-y += gap
+    for w, t in zip([AREA_W, STATE_W, CO_W], col_titles):
+        rect(x, y, x + w, y + hdr_h, LABEL)
+        text_block(x, y, w, hdr_h, t, f_lbl, INK, align="center", valign="center", bold=True)
+        x += w
+    y += hdr_h
+    for c0, c1, c2, rh in table_rows:
+        x = PAD
+        rect(x, y, x + AREA_W, y + rh, LABEL)
+        text_block(x, y, AREA_W, rh, c0, f_lbl, INK, valign="center", bold=True)
+        x += AREA_W
+        rect(x, y, x + STATE_W, y + rh, WHITE)
+        text_block(x, y, STATE_W, rh, c1, f_body, SUB_INK)
+        x += STATE_W
+        rect(x, y, x + CO_W, y + rh, WHITE)
+        text_block(x, y, CO_W, rh, c2, f_body, INK)
+        y += rh
+    return y + gap
+
+
+y = draw_table(y, "自分ごとに落とすと ①：進め方の無駄（どう動くか）",
+               ["型", "どういう状態が無駄か", "例 ＋ 対策の方向"], rowsA)
+y = draw_table(y, "自分ごとに落とすと ②：仕組み（型・基盤）の無駄（毎回ゼロから・属人）",
+               ["領域", "どういう状態が無駄か", "対策の方向（型・基盤を整備）"], rowsB)
 
 y = draw_band(y, "対策の方向（再現性を上げる）")
 y = draw_bullets(y, tais, tais_h)
