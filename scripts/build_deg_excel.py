@@ -150,6 +150,29 @@ for head, txt in M.OPEN_ISSUES:
     C(ws6, r, 1, head, bold=True, color=DBLUE, bg=PROC, va="center"); C(ws6, r, 2, txt); ws6.row_dimensions[r].height = 38; r += 1
 ws6.column_dimensions["A"].width = 24; ws6.column_dimensions["B"].width = 86
 
+# ═══ Sheet7/8 候補の取捨選択（全整理／採用後） ═══
+ADOPT = "E8F1E5"; DROP = "F3D9D4"  # 採用＝淡緑／不採用＝淡赤
+def candidate_sheet(name, title, rows):
+    w = wb.create_sheet(name); w.sheet_view.showGridLines = False
+    C(w, 1, 1, title, bold=True, size=13, color=BLUE)
+    header_row(w, 2, ["項目（仮説・観測・候補）", "内容", "採否", "理由"])
+    rr = 3
+    for item, content, verdict, reason in rows:
+        fill = ADOPT if verdict.startswith("採用") else DROP
+        C(w, rr, 1, item, bold=True, color=DBLUE, bg=fill, va="center")
+        C(w, rr, 2, content, bg=fill)
+        C(w, rr, 3, verdict, bg=fill, ha="center", va="center",
+          color=("1F7A1F" if verdict.startswith("採用") else "B03030"), bold=True)
+        C(w, rr, 4, reason, bg=fill)
+        w.row_dimensions[rr].height = 36; rr += 1
+    for col, wd in zip("ABCD", [30, 40, 16, 50]):
+        w.column_dimensions[col].width = wd
+    w.freeze_panes = "A3"
+
+candidate_sheet("候補の全整理", "これまでの議論で出た候補（全部）　採用＝淡緑／不採用＝淡赤", M.CANDIDATES)
+candidate_sheet("採用後（ブラッシュアップ）", "ブラッシュアップ後＝採用した筋だけを残したもの",
+                [c for c in M.CANDIDATES if c[2].startswith("採用")])
+
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 wb.save(OUT)
 print("saved:", os.path.normpath(OUT), "| sheets:", wb.sheetnames)

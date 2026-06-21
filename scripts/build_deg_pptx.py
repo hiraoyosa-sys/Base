@@ -305,17 +305,17 @@ for i, (stg, sym, c6) in enumerate(zip(M.STAGES, M.STRENGTH, concl), 1):
 # 7. なぜ今回（条件の重なり）
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "なぜ今回だけ起きたか（条件の重なり）")
-tf = tbx(s, 0.6, 1.4, 12.1, 0.8)
-P(tf, M.WHY_CONTEXT, 13, color=GRAY, first=True)
-y = 2.4
+tf = tbx(s, 0.6, 1.32, 12.1, 1.1)
+P(tf, M.WHY_CONTEXT, 12.5, color=GRAY, first=True)
+y = 2.55
 for head, txt, act in M.WHY_NOW:
-    bx = rrect(s, 0.6, y, 12.1, 1.25, H_FILL, line=LINE, lw=1.0)
+    bx = rrect(s, 0.6, y, 12.1, 1.0, H_FILL, line=LINE, lw=1.0)
     tf = bx.text_frame; tf.word_wrap = True; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
     tf.margin_left = Emu(int(0.16*IN)); tf.margin_right = Emu(int(0.12*IN))
-    p = tf.paragraphs[0]; r = p.add_run(); r.text = "【" + head + "】 "; r.font.size = Pt(14.5); r.font.bold = True; r.font.color.rgb = DBLUE; _ea(r)
-    r2 = p.add_run(); r2.text = txt; r2.font.size = Pt(13); r2.font.color.rgb = INK; _ea(r2)
-    p2 = tf.add_paragraph(); r3 = p2.add_run(); r3.text = act; r3.font.size = Pt(13); r3.font.bold = True; r3.font.color.rgb = BLUE; _ea(r3)
-    y += 1.38
+    p = tf.paragraphs[0]; r = p.add_run(); r.text = "【" + head + "】 "; r.font.size = Pt(13.5); r.font.bold = True; r.font.color.rgb = DBLUE; _ea(r)
+    r2 = p.add_run(); r2.text = txt; r2.font.size = Pt(12); r2.font.color.rgb = INK; _ea(r2)
+    p2 = tf.add_paragraph(); r3 = p2.add_run(); r3.text = act; r3.font.size = Pt(12); r3.font.bold = True; r3.font.color.rgb = BLUE; _ea(r3)
+    y += 1.12
 
 # ════════════════════════════════════════════════════════════
 # 8. 設備（鉄サビ）は主因でない
@@ -446,6 +446,30 @@ KINDF = {"fact": C_OPE, "principle": RGBColor(0xF1, 0xF1, 0xF1), "concl": C_SUJI
 for i, (label, kind, cells) in enumerate(M.GRID, 2):
     gc(i, 0, label, bold=True, color=DBLUE, fill=H_FILL, size=7.5)
     for j, val in enumerate(cells, 1): gc(i, j, val, fill=KINDF.get(kind, WHITE), size=7)
+
+# ════════════════════════════════════════════════════════════
+# 付録 候補の取捨選択（議論で出た候補と採否）
+# ════════════════════════════════════════════════════════════
+s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "（参考）候補の取捨選択（何を採り、何を落としたか）")
+ADOPTF = RGBColor(0xE8, 0xF1, 0xE5); DROPF = RGBColor(0xF3, 0xD9, 0xD4)
+cand = M.CANDIDATES
+tc = s.shapes.add_table(len(cand) + 1, 3, Emu(int(0.4*IN)), Emu(int(1.45*IN)), Emu(int(12.5*IN)), Emu(int(5.65*IN))).table
+tc.columns[0].width = Emu(int(3.9*IN)); tc.columns[1].width = Emu(int(1.7*IN)); tc.columns[2].width = Emu(int(6.9*IN))
+def cc(i, j, text, bold=False, fill=WHITE, color=INK, size=8, align=None):
+    c = tc.cell(i, j); c.text = ""; c.vertical_anchor = MSO_ANCHOR.MIDDLE
+    c.margin_left = Emu(int(0.04*IN)); c.margin_right = Emu(int(0.03*IN)); c.margin_top = Emu(int(0.01*IN)); c.margin_bottom = Emu(int(0.01*IN))
+    p = c.text_frame.paragraphs[0]
+    if align is not None: p.alignment = align
+    r = p.add_run(); r.text = text; r.font.size = Pt(size); r.font.bold = bold; r.font.color.rgb = color; _ea(r)
+    c.fill.solid(); c.fill.fore_color.rgb = fill
+cc(0, 0, "候補（仮説・観測）", bold=True, color=DBLUE, fill=H_FILL, size=8.5)
+cc(0, 1, "採否", bold=True, color=DBLUE, fill=H_FILL, size=8.5, align=PP_ALIGN.CENTER)
+cc(0, 2, "理由", bold=True, color=DBLUE, fill=H_FILL, size=8.5)
+for i, (item, content, verdict, reason) in enumerate(cand, 1):
+    adopt = verdict.startswith("採用"); fill = ADOPTF if adopt else DROPF
+    cc(i, 0, item, bold=True, color=DBLUE, fill=fill, size=7.5)
+    cc(i, 1, verdict, fill=fill, color=(RGBColor(0x1F, 0x7A, 0x1F) if adopt else RGBColor(0xB0, 0x30, 0x30)), bold=True, size=7.5, align=PP_ALIGN.CENTER)
+    cc(i, 2, reason, fill=fill, size=7.5)
 
 # ── 元テンプレートの既存8枚を除去（新規スライドだけ残す） ──
 sldIdLst = prs.slides._sldIdLst
