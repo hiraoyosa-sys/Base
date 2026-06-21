@@ -140,6 +140,11 @@ C(ws6, 2, 1, "■ 品質管理・早期判定", bold=True, size=11, color=BLUE);
 r = 3
 for t in M.QC:
     C(ws6, r, 1, t); ws6.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2); ws6.row_dimensions[r].height = 34; r += 1
+C(ws6, r, 1, "■ 出荷判定の運用（歯止め）", bold=True, size=11, color=BLUE); ws6.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2); r += 1
+C(ws6, r, 1, M.GATE_NOTE, size=9.5, color="555555"); ws6.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2); ws6.row_dimensions[r].height = 30; r += 1
+header_row(ws6, r, ["項目", "運用（「本会議で確定」＝具体値は対策会議で固める）"]); r += 1
+for k, v in M.GATE:
+    C(ws6, r, 1, k, bold=True, color=DBLUE, bg=PROC, va="center"); C(ws6, r, 2, v); ws6.row_dimensions[r].height = 32; r += 1
 C(ws6, r, 1, "■ 残論点（要確認）", bold=True, size=11, color=BLUE); ws6.merge_cells(start_row=r, start_column=1, end_row=r, end_column=2); r += 1
 header_row(ws6, r, ["論点", "確認の方向"]); r += 1
 for head, txt in M.OPEN_ISSUES:

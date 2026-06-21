@@ -135,6 +135,15 @@ P(tf, "製品DEG色相悪化　対応", 34, bold=True, color=DBLUE, first=True, 
 P(tf, "事実の整理 → 推定メカニズム → 対応", 17, color=GRAY, space=2)
 tf2 = tbx(s, 0.9, 4.75, 11.5, 0.6)
 P(tf2, M.DATE, 14, color=GRAY, first=True)
+# 下部：3フェーズのロードマップ
+road = [("① 事実の整理", "発生事象・着色物質・工程別グリッド"),
+        ("② 推定メカニズム", "アルドール縮合→前駆体→タンク熟成→450nm"),
+        ("③ 対応", "触媒交換・運転条件・UV450判定")]
+bx_w = 3.8; gap = 0.3; xx = 0.9
+for t1, t2 in road:
+    bx = rrect(s, xx, 5.75, bx_w, 1.05, H_FILL, line=BLUE, lw=1.0)
+    boxtext(bx, [(t1, 14, True, DBLUE), (t2, 9, False, GRAY)], anchor=MSO_ANCHOR.MIDDLE, align=PP_ALIGN.CENTER)
+    xx += bx_w + gap
 
 # ════════════════════════════════════════════════════════════
 # 1.5 概要（結論サマリ：承認者が最初に全体を掴む）
@@ -303,6 +312,26 @@ tf = tbx(s, 0.55, 1.5, 7.1, 5.4)
 for i, t in enumerate(M.QC):
     P(tf, t, 12, bullet=True, first=(i == 0), space=11)
 pic(s, FIG_UV450, 7.8, 2.5, w=5.3)
+
+# ════════════════════════════════════════════════════════════
+# 11.5 出荷判定の運用（歯止め）：枠組みを明示（具体値は会議で確定）
+# ════════════════════════════════════════════════════════════
+s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "出荷判定の運用（歯止め）")
+tf = tbx(s, 0.6, 1.35, 12.1, 0.5)
+P(tf, M.GATE_NOTE, 11, color=GRAY, first=True)
+rows = M.GATE
+tg = s.shapes.add_table(len(rows)+1, 2, Emu(int(0.6*IN)), Emu(int(1.95*IN)), Emu(int(12.1*IN)), Emu(int(4.7*IN))).table
+tg.columns[0].width = Emu(int(3.2*IN)); tg.columns[1].width = Emu(int(8.9*IN))
+def cellg(i, j, text, bold=False, fill=WHITE, color=INK, size=11):
+    c = tg.cell(i, j); c.text = ""; c.vertical_anchor = MSO_ANCHOR.MIDDLE
+    c.margin_top = Emu(int(0.03*IN)); c.margin_bottom = Emu(int(0.03*IN)); c.margin_left = Emu(int(0.06*IN))
+    p = c.text_frame.paragraphs[0]; r = p.add_run(); r.text = text; r.font.size = Pt(size); r.font.bold = bold; r.font.color.rgb = color; _ea(r)
+    c.fill.solid(); c.fill.fore_color.rgb = fill
+cellg(0, 0, "項目", bold=True, color=DBLUE, fill=H_FILL)
+cellg(0, 1, "運用（「本会議で確定」＝具体値は本対策会議で固める）", bold=True, color=DBLUE, fill=H_FILL)
+for i, (k, v) in enumerate(rows, 1):
+    cellg(i, 0, k, bold=True, color=DBLUE, fill=PROC, size=10.5)
+    cellg(i, 1, v, size=10)
 
 # ════════════════════════════════════════════════════════════
 # 12. 承認のお願い

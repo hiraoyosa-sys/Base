@@ -166,6 +166,9 @@ for head, txt, conf in M.COUNTERMEASURE:
 # 8
 h("8. 出荷再開に向けた品質管理・早期判定")
 for t in M.QC: body(t, bullet=True)
+p = doc.add_paragraph(); set_font(p.add_run("■ 出荷判定の運用（歯止め）"), 11, True, NAVY)
+note(M.GATE_NOTE)
+for k, v in M.GATE: body("【" + k + "】 " + v, bullet=True)
 
 # 9
 h("9. 残論点（要確認）")
