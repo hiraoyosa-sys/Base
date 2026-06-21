@@ -15,17 +15,19 @@ TANK = "#FFF6E0"  # 着色の場（タンク）を淡いアンバーで強調
 OUT = os.path.join(os.path.dirname(__file__), "..", "outputs", "mechanism_flow.png")
 
 steps = [
-    ("EO反応器", "①アルデヒド増加\n（触媒選択性低下）", NAVY),
-    ("脱水塔\n（低水分）", "低水分で\n縮合が進みやすい", BLUE),
-    ("MEG塔", "縮合体（高沸点）\nとしてDEG留分へ", BLUE),
-    ("DEG塔", "②アルドール縮合\n前駆体（MW150・330nm）", RED),
-    ("製品タンク\n（N2・長期）", "③前駆体が熟成\n共役伸長→450nm", GREEN),
+    ("EO反応系", "①アルデヒド\n増加", NAVY),
+    ("EG反応系", "グリコールと\n共存", BLUE),
+    ("EG濃縮系", "大半パージ\n一部下流へ", BLUE),
+    ("EG脱水系", "低水分で\n縮合が進む", BLUE),
+    ("MEG精製系", "通過点\n（金属なし）", BLUE),
+    ("DEG精製系", "②前駆体生成\n330nm・MW150", RED),
+    ("製品タンク\n(N2・長期)", "③熟成→共役\n伸長→450nm", GREEN),
 ]
 
 fig, ax = plt.subplots(figsize=(13.0, 3.15), dpi=200)
 ax.set_xlim(0, 100); ax.set_ylim(0, 32); ax.axis("off")
 
-n = len(steps); bw = 16.5; gap = (100 - n*bw) / (n+1)
+n = len(steps); gap = 1.6; bw = (100 - (n+1)*gap) / n
 x = gap; yb = 16; bh = 11
 centers = []
 for (name, mech, col) in steps:
@@ -33,10 +35,10 @@ for (name, mech, col) in steps:
     box = FancyBboxPatch((x, yb), bw, bh, boxstyle="round,pad=0.3,rounding_size=1.2",
                          linewidth=2, edgecolor=col, facecolor=fc)
     ax.add_patch(box)
-    ax.text(x+bw/2, yb+bh-2.4, name, ha="center", va="top", fontproperties=fp,
-            fontsize=12.5, fontweight="bold", color=col)
-    ax.text(x+bw/2, yb+bh-6.2, mech, ha="center", va="top", fontproperties=fp,
-            fontsize=9.3, color="#222222")
+    ax.text(x+bw/2, yb+bh-2.0, name, ha="center", va="top", fontproperties=fp,
+            fontsize=10.0, fontweight="bold", color=col)
+    ax.text(x+bw/2, yb+bh-5.8, mech, ha="center", va="top", fontproperties=fp,
+            fontsize=8.2, color="#222222")
     centers.append(x+bw/2)
     x += bw + gap
 

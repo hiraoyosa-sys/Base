@@ -101,25 +101,45 @@ def cell_text(cell, text, bold=False, color=None, size=9):
     p = cell.paragraphs[0]; r = p.add_run(); r.text = text
     set_font(r, size, bold, color); p.paragraph_format.space_after = Pt(0)
 
-h("3.5　工程別の整理（①運転 ②RD ③文献 → 1本の筋）")
-note("各工程で：①運転で見えた事実 ②RDで検証した事実 ③文献・この工程で起こる反応 → ④この工程の筋。全工程をトータルすると最後の1本の筋になる。")
-fills = [FILL_PROC, FILL_OPE, FILL_RD, FILL_LIT, FILL_SUJI]
-tbl = doc.add_table(rows=1, cols=5); tbl.alignment = WD_TABLE_ALIGNMENT.CENTER; tbl.style = "Table Grid"
-for j, htext in enumerate(M.MATRIX_COLS):
-    cell_text(tbl.rows[0].cells[j], htext, bold=True, color=DBLUE, size=9); shade(tbl.rows[0].cells[j], fills[j])
-for proc, ope, rd, lit, suji in M.PROCESS_MATRIX:
-    cells = tbl.add_row().cells
-    for j, (val, col, bold) in enumerate([(proc, DBLUE, True), (ope, None, False), (rd, None, False), (lit, None, False), (suji, DBLUE, True)]):
-        cell_text(cells[j], val, bold=bold, color=col, size=8.5); shade(cells[j], fills[j])
-sr = tbl.add_row().cells; sr[0].merge(sr[0])
-cell_text(sr[0], "トータル＝1本の筋", bold=True, color=NAVY, size=9); shade(sr[0], FILL_PROC)
-merged = sr[1].merge(sr[4]); cell_text(merged, M.MECH_ONELINE, bold=True, color=DBLUE, size=8.5); shade(merged, FILL_SUJI)
-# 列幅
+# 工程別グリッド（横＝工程）はランドスケープのセクションに置く
+from docx.enum.section import WD_ORIENT, WD_SECTION
 from docx.shared import Cm as _Cm
-widths = [2.6, 4.4, 4.4, 4.4, 3.2]
+sec = doc.add_section(WD_SECTION.NEW_PAGE)
+sec.orientation = WD_ORIENT.LANDSCAPE
+sec.page_width, sec.page_height = sec.page_height, sec.page_width
+sec.left_margin = _Cm(1.2); sec.right_margin = _Cm(1.2)
+
+h("3.5　工程別グリッド（横＝工程／縦＝項目）")
+note("空欄＝確実な情報なし（無理に埋めない）。行の色＝根拠：緑＝事実（運転・解放・RD）／青＝文献・社外知見／灰＝一般原理／青灰＝小結論。空欄の多い工程ほど不確実。")
+KIND_FILL = {"fact": FILL_OPE, "lit": FILL_LIT, "principle": "F1F1F1", "concl": FILL_SUJI}
+ncol = 1 + len(M.STAGES)
+tbl = doc.add_table(rows=1, cols=ncol); tbl.alignment = WD_TABLE_ALIGNMENT.CENTER; tbl.style = "Table Grid"
+cell_text(tbl.rows[0].cells[0], "項目", bold=True, color=DBLUE, size=8.5); shade(tbl.rows[0].cells[0], FILL_HEAD)
+for j, stg in enumerate(M.STAGES, 1):
+    cell_text(tbl.rows[0].cells[j], stg.replace("\n", " "), bold=True, color=DBLUE, size=8); shade(tbl.rows[0].cells[j], FILL_PROC)
+# 裏付け強度
+srow = tbl.add_row().cells
+cell_text(srow[0], "裏付け強度", bold=True, color=DBLUE, size=8); shade(srow[0], FILL_HEAD)
+for j, sym in enumerate(M.STRENGTH, 1):
+    cell_text(srow[j], sym, bold=True, color=DBLUE, size=11); shade(srow[j], FILL_PROC)
+    srow[j].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+for label, kind, cells in M.GRID:
+    row = tbl.add_row().cells
+    cell_text(row[0], label, bold=True, color=DBLUE, size=8); shade(row[0], FILL_HEAD)
+    for j, val in enumerate(cells, 1):
+        cell_text(row[j], val, size=7.5); shade(row[j], KIND_FILL[kind])
+widths = [2.6] + [3.5] * len(M.STAGES)
 for row in tbl.rows:
     for j, w in enumerate(widths):
         row.cells[j].width = _Cm(w)
+# 1本の筋（表の外）
+ps = doc.add_paragraph(); ps.paragraph_format.space_before = Pt(6)
+set_font(ps.add_run("全工程をトータル＝1本の筋（仮説）： "), 10.5, True, NAVY)
+set_font(ps.add_run(M.SUJI_TEXT), 10)
+# 縦（ポートレート）に戻す
+sec2 = doc.add_section(WD_SECTION.NEW_PAGE)
+sec2.orientation = WD_ORIENT.PORTRAIT
+sec2.page_width, sec2.page_height = sec2.page_height, sec2.page_width
 
 # 4
 h("4. なぜ今回だけDEGまで到達し着色したか")

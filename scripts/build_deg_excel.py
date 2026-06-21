@@ -35,35 +35,49 @@ def header_row(ws, r, cols, fills=None):
 
 wb = openpyxl.Workbook()
 
-# ═══ Sheet1 工程別マトリクス（中心） ═══
-ws = wb.active; ws.title = "工程別マトリクス"; ws.sheet_view.showGridLines = False
-C(ws, 1, 1, "製品DEG色相悪化　工程別の事実整理　→　1本の筋（仮説）", bold=True, size=13, color=BLUE)
-C(ws, 2, 1, "各工程で：①運転で見えた事実　②RDで検証した事実　③文献・この工程で起こる反応　→　④この工程の筋。全工程をトータルすると下段の1本の筋になる。",
-  size=9.5, color="555555")
-ws.merge_cells("A2:E2")
-fills = [PROC, C_OPE, C_RD, C_LIT, C_SUJI]
-header_row(ws, 3, M.MATRIX_COLS, fills=fills)
-r = 4
-for proc, ope, rd, lit, suji in M.PROCESS_MATRIX:
-    C(ws, r, 1, proc, bold=True, color=DBLUE, bg=PROC, va="center")
-    C(ws, r, 2, ope, bg=C_OPE)
-    C(ws, r, 3, rd, bg=C_RD)
-    C(ws, r, 4, lit, bg=C_LIT)
-    C(ws, r, 5, suji, bold=True, color=DBLUE, bg=C_SUJI)
-    ws.row_dimensions[r].height = 92
+# ═══ Sheet1 工程別グリッド（横＝工程／縦＝項目・空欄は情報なし） ═══
+ws = wb.active; ws.title = "工程別グリッド"; ws.sheet_view.showGridLines = False
+KIND_FILL = {"fact": C_OPE, "lit": C_LIT, "principle": "F1F1F1", "concl": C_SUJI}
+KIND_NAME = {"fact": "事実", "lit": "文献", "principle": "原理", "concl": "小結論"}
+C(ws, 1, 1, "製品DEG色相悪化　工程別グリッド（横＝工程／縦＝項目）", bold=True, size=13, color=BLUE)
+C(ws, 2, 1, "空欄＝確実な情報なし（無理に埋めない）。行の色＝根拠：緑＝事実（運転・解放・RD）／青＝文献・社外知見／灰＝一般原理／青灰＝小結論。"
+            "上段の裏付け強度：◎事実複数で確定／○一部事実＋原理／△収支・原理のみで確度低。列を縦に見ると工程ごとの裏の厚さが分かる。", size=9.5, color="555555")
+ws.merge_cells("A2:H2")
+# ヘッダ：項目 + 7工程
+C(ws, 3, 1, "項目", bold=True, color=DBLUE, bg=H_FILL, ha="center", va="center")
+for j, stg in enumerate(M.STAGES, 2):
+    C(ws, 3, j, stg.replace("\n", " "), bold=True, color=DBLUE, bg=PROC, ha="center", va="center")
+ws.row_dimensions[3].height = 30
+# 裏付け強度（◎○△）
+SYM_COL = {"◎": "005BAB", "○": "003F7E", "△": "C07A00"}
+C(ws, 4, 1, "裏付け強度", bold=True, color=DBLUE, bg=H_FILL, ha="center", va="center")
+for j, sym in enumerate(M.STRENGTH, 2):
+    C(ws, 4, j, sym, bold=True, color=SYM_COL.get(sym, DBLUE), bg=PROC, ha="center", va="center", size=14)
+ws.row_dimensions[4].height = 24
+r = 5
+for label, kind, cells in M.GRID:
+    fill = KIND_FILL[kind]
+    C(ws, r, 1, label, bold=True, color=DBLUE, bg=H_FILL, va="center")
+    for j, val in enumerate(cells, 2):
+        C(ws, r, j, val, bg=fill)
+    ws.row_dimensions[r].height = 70
     r += 1
-# 1本の筋
-C(ws, r, 1, "トータル＝1本の筋", bold=True, color="FFFFFF", bg=BLUE, va="center", ha="center")
-C(ws, r, 2, M.MECH_ONELINE, bold=True, color=DBLUE, bg=C_SUJI)
-ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=5)
-ws.row_dimensions[r].height = 60
+# 1本の筋（表の外・別建て）
 r += 1
-C(ws, r, 1, "注記：本筋は最有力仮説でRDベンチ未再現（タンク長期・低水分・塩基の同時再現が未達）。方向性は観測と整合。", size=9, color="555555")
-ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=5)
-widths = [20, 30, 30, 30, 24]
-for i, w in enumerate(widths, 1):
-    ws.column_dimensions[get_column_letter(i)].width = w
-ws.freeze_panes = "B4"
+C(ws, r, 1, "全工程をトータル＝1本の筋（仮説）", bold=True, color="FFFFFF", bg=BLUE, va="center")
+ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=8)
+r += 1
+C(ws, r, 1, M.SUJI_TEXT, bold=True, color=DBLUE, bg=C_SUJI, va="center")
+ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=8)
+ws.row_dimensions[r].height = 52
+r += 1
+C(ws, r, 1, "注記：本筋は最有力仮説でRDベンチ未再現（タンク長期・低水分・塩基の同時再現が未達）。文献・原理だけで事実の裏付けが薄い工程（空欄が多い列）は不確実性が大きい。",
+  size=9, color="555555")
+ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=8)
+ws.column_dimensions["A"].width = 20
+for j in range(2, 9):
+    ws.column_dimensions[get_column_letter(j)].width = 26
+ws.freeze_panes = "B5"
 
 # ═══ Sheet2 発生事象・着色物質 ═══
 ws2 = wb.create_sheet("発生事象・着色物質"); ws2.sheet_view.showGridLines = False

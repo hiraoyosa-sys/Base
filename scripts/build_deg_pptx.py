@@ -174,41 +174,13 @@ tf2 = tbx(s, 0.6, 6.75, 12.1, 0.6)
 P(tf2, "※ " + M.MECH_CAVEAT, 10, color=GRAY, first=True)
 
 # ════════════════════════════════════════════════════════════
-# 5. 工程別の整理（①運転 ②RD ③文献 → ④筋）＝表
-# ════════════════════════════════════════════════════════════
-s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "工程別の整理（①運転 ②RD ③文献 → 筋）")
-nrow = len(M.PROCESS_MATRIX) + 2  # header + rows + suji
-tbl = s.shapes.add_table(nrow, 5, Emu(int(0.4*IN)), Emu(int(1.4*IN)), Emu(int(12.5*IN)), Emu(int(5.5*IN))).table
-ws = [1.7, 2.9, 2.9, 2.9, 2.1]
-for j, w in enumerate(ws): tbl.columns[j].width = Emu(int(w*IN))
-hdr = M.MATRIX_COLS
-hfills = [PROC, C_OPE, C_RD, C_LIT, C_SUJI]
-def cell(i, j, text, bold=False, color=INK, fill=WHITE, size=9):
-    c = tbl.cell(i, j); c.text = ""; c.margin_left = Emu(int(0.05*IN)); c.margin_right = Emu(int(0.03*IN))
-    c.margin_top = Emu(int(0.02*IN)); c.margin_bottom = Emu(int(0.02*IN))
-    c.vertical_anchor = MSO_ANCHOR.TOP
-    p = c.text_frame.paragraphs[0]; r = p.add_run(); r.text = text
-    r.font.size = Pt(size); r.font.bold = bold; r.font.color.rgb = color; _ea(r)
-    c.fill.solid(); c.fill.fore_color.rgb = fill
-for j, h in enumerate(hdr): cell(0, j, h, bold=True, color=DBLUE, fill=hfills[j], size=9.5)
-for i, (proc, ope, rd, lit, suji) in enumerate(M.PROCESS_MATRIX, 1):
-    cell(i, 0, proc, bold=True, color=DBLUE, fill=PROC, size=9)
-    cell(i, 1, ope, fill=C_OPE); cell(i, 2, rd, fill=C_RD); cell(i, 3, lit, fill=C_LIT)
-    cell(i, 4, suji, bold=True, color=DBLUE, fill=C_SUJI)
-# suji row
-li = nrow - 1
-cell(li, 0, "トータル＝1本の筋", bold=True, color=WHITE, fill=BLUE, size=9)
-c = tbl.cell(li, 1);
-tbl.cell(li, 1).merge(tbl.cell(li, 4))
-cc = tbl.cell(li, 1); cc.text = ""; cc.fill.solid(); cc.fill.fore_color.rgb = C_SUJI
-p = cc.text_frame.paragraphs[0]; r = p.add_run(); r.text = M.MECH_ONELINE
-r.font.size = Pt(9.5); r.font.bold = True; r.font.color.rgb = DBLUE; _ea(r)
-
-# ════════════════════════════════════════════════════════════
-# 6. 工程フロー（どこで何が起きるか）
+# 5. 工程フロー（どこで何が起きるか）※工程別グリッドの詳細は事実整理Excelに集約
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "どこで何が起きるか（工程フロー）")
-pic(s, FIG_FLOW, 0.4, 1.7, w=12.5)
+pic(s, FIG_FLOW, 0.35, 1.75, w=12.6)
+tf = tbx(s, 0.6, 5.7, 12.1, 1.2)
+P(tf, "工程ごとの事実（運転・解放・RD）／文献・社外知見／一般原理の切り分けは「事実整理（工程別グリッド）」に整理。",
+  11, color=GRAY, first=True)
 
 # ════════════════════════════════════════════════════════════
 # 7. なぜ今回（条件の重なり）
