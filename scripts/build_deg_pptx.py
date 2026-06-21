@@ -137,6 +137,20 @@ tf2 = tbx(s, 0.9, 4.75, 11.5, 0.6)
 P(tf2, M.DATE, 14, color=GRAY, first=True)
 
 # ════════════════════════════════════════════════════════════
+# 1.5 概要（結論サマリ：承認者が最初に全体を掴む）
+# ════════════════════════════════════════════════════════════
+s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "概要")
+y = 1.55
+tagfill = {"事実": C_OPE, "仮説": C_LIT, "対応": H_FILL, "ご依頼": C_SUJI}
+for lab, txt in M.SUMMARY:
+    bx = rrect(s, 0.6, y, 12.1, 1.18, tagfill.get(lab, H_FILL), line=LINE, lw=1.0)
+    tag = rrect(s, 0.8, y + 0.32, 1.5, 0.54, WHITE, line=BLUE, lw=1.25)
+    boxtext(tag, [(lab, 14, True, DBLUE)], align=PP_ALIGN.CENTER)
+    tf = tbx(s, 2.55, y + 0.12, 10.0, 0.95)
+    P(tf, txt, 13, color=INK, first=True)
+    y += 1.32
+
+# ════════════════════════════════════════════════════════════
 # 2. 発生事象（事実）
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "発生事象（事実）")
@@ -178,7 +192,7 @@ P(tf2, "※ " + M.MECH_CAVEAT, 10, color=GRAY, first=True)
 # ════════════════════════════════════════════════════════════
 # 5. 工程フロー（どこで何が起きるか）※工程別グリッドの詳細は事実整理Excelに集約
 # ════════════════════════════════════════════════════════════
-s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "どこで何が起きるか（工程フロー）")
+s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "縮合は脱水塔以降で起こる（工程フロー）")
 pic(s, FIG_FLOW, 0.35, 1.75, w=12.6)
 tf = tbx(s, 0.6, 5.7, 12.1, 1.2)
 P(tf, "工程ごとの事実（運転・解放・RD）／文献・社外知見／一般原理の切り分けは「事実整理（工程別グリッド）」に整理。",
@@ -229,18 +243,22 @@ for head, txt, act in M.WHY_NOW:
 # 8. 設備（鉄サビ）は主因でない
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "設備（鉄サビ）は色相の主因ではない")
-tf = tbx(s, 0.55, 1.5, 7.0, 5.4)
-for i, t in enumerate(M.RUST):
-    last = (i == len(M.RUST) - 1)
-    P(tf, t, 12, bullet=True, first=(i == 0), bold=last, color=(DBLUE if last else INK), space=12)
-pic(s, FIG_UV, 7.7, 2.25, w=5.4)
-tf2 = tbx(s, 7.7, 5.55, 5.4, 0.8)
-P(tf2, "付着物は380nmのみ・実機は450nm＝別現象（保管試験で確認）", 10.5, bold=True, color=DBLUE, first=True)
+pic(s, FIG_UV, 6.7, 1.55, w=6.3)
+tf = tbx(s, 0.55, 1.7, 5.95, 4.0)
+_pts = [
+    "C-1503の黒色付着物はほぼ鉄サビ＋有機酸（局所の腐食）。",
+    "付着物をDEGに加えても380nmのみ＝実機の450nmは再現しない（保管試験）。",
+    "T-555残液はAPHA30で頭打ち＝タンクの鉄サビは促進触媒でない。",
+]
+for i, t in enumerate(_pts):
+    P(tf, t, 13, bullet=True, first=(i == 0), space=16)
+concl = rrect(s, 0.55, 5.75, 12.2, 0.95, C_SUJI, line=BLUE, lw=1.0)
+boxtext(concl, [("→ 鉄サビ・付着物は色相（450nm）の主因でなく、寄与は局所380nm。実測で判断（金属が無くてもアルデヒドとpHで着色を説明できる）。洗浄は予防保全。", 12, True, DBLUE)])
 
 # ════════════════════════════════════════════════════════════
 # 9. 開放・検査（機器ごと）
 # ════════════════════════════════════════════════════════════
-s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "開放・検査の整理（仮説駆動）")
+s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "設備に色相の主因なし（開放・検査の結論）")
 tf = tbx(s, 0.6, 1.4, 12.1, 0.55); P(tf, M.INSPECTION_LOGIC, 11, color=GRAY, first=True)
 rows = M.INSPECTION
 t2 = s.shapes.add_table(len(rows)+1, 2, Emu(int(0.6*IN)), Emu(int(2.05*IN)), Emu(int(12.1*IN)), Emu(int(4.5*IN))).table
@@ -290,12 +308,21 @@ pic(s, FIG_UV450, 7.8, 2.5, w=5.3)
 # 12. 承認のお願い
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "出荷再開の判断（ご承認のお願い）")
-tf = tbx(s, 0.6, 1.5, 12.1, 3.6)
-P(tf, "触媒交換（原因除去）・設備洗浄・スタートアップ運転条件（NaOH非投入ベース／温度を下げない／リン酸で緩和）により、色相悪化の再発を抑える。", 14, first=True, space=12)
-P(tf, "再稼働後の初期流動品は、全項目規格内かつタンク保管中の色相・UVの経時変化が無いことを確認したうえで出荷する。", 14, space=12)
-P(tf, "早期判定はUV450nm（最も感度が高い）を主指標とし、UV330nmを補助に用いる。判定基準の具体値は本対策会議で確定する。", 14, space=12)
-bar = rrect(s, 0.6, 5.45, 12.1, 0.95, H_FILL, line=BLUE, lw=1.25)
-boxtext(bar, [("上記の前提で、製品DEGの出荷再開についてご承認をお願いします。", 15, True, DBLUE)], align=PP_ALIGN.CENTER)
+steps = [
+    ("① まず出口実測で歯止め", "初期流動品は、全項目が規格内、かつタンク保管中のUV・色相が経時で不変であることを確認したうえでのみ出荷する。仮説の真偽に依らず、実測で歯止めをかける。"),
+    ("② それを支える対応", "触媒交換（実施済）・設備洗浄・運転条件（NaOH非投入／温度を下げない／リン酸で緩和）。早期判定はUV450nm主・UV330補助。判定基準の具体値は本会議で確定。"),
+    ("③ なぜ起きたか（参考）", "触媒劣化で増えたアルデヒドが縮合して前駆体になり、タンクで熟成・共役伸長して450nm（最有力仮説・ベンチ未再現）。"),
+]
+y = 1.5
+for head, txt in steps:
+    bx = rrect(s, 0.6, y, 12.1, 1.18, H_FILL, line=LINE, lw=1.0)
+    tf = bx.text_frame; tf.word_wrap = True; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+    tf.margin_left = Emu(int(0.16*IN)); tf.margin_right = Emu(int(0.12*IN))
+    p = tf.paragraphs[0]; r = p.add_run(); r.text = head; r.font.size = Pt(13.5); r.font.bold = True; r.font.color.rgb = DBLUE; _ea(r)
+    p2 = tf.add_paragraph(); r2 = p2.add_run(); r2.text = txt; r2.font.size = Pt(11.5); r2.font.color.rgb = INK; _ea(r2)
+    y += 1.3
+bar = rrect(s, 0.6, 5.55, 12.1, 0.95, C_SUJI, line=BLUE, lw=1.25)
+boxtext(bar, [("上記の前提（出口実測での歯止め）で、製品DEGの出荷再開についてご承認をお願いします。", 15, True, DBLUE)], align=PP_ALIGN.CENTER)
 
 # ── 元テンプレートの既存8枚を除去（新規スライドだけ残す） ──
 sldIdLst = prs.slides._sldIdLst
