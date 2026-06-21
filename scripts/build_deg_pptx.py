@@ -118,50 +118,52 @@ def pic(s, path, l, t, w=None, h=None):
 FIG_FLOW = os.path.join(OUTDIR, "mechanism_flow.png")
 FIG_ALDOL = os.path.join(OUTDIR, "aldol_scheme.png")
 FIG_POLY = os.path.join(OUTDIR, "polyenal_long.png")
+FIG_APHA = os.path.join(OUTDIR, "apha_trend.png")
+FIG_UV = os.path.join(OUTDIR, "uv_spectrum.png")
+FIG_UV450 = os.path.join(OUTDIR, "uv450_trend.png")
 
 # ════════════════════════════════════════════════════════════
 # 1. 表紙
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_COVER)
-set_title(s, "製品DEG色相悪化　対応")
-for ph in s.placeholders:
-    if ph.placeholder_format.idx not in (0,):
-        try:
-            if ph.has_text_frame and ph.placeholder_format.idx in (1,):
-                ph.text = ""; r = ph.text_frame.paragraphs[0].add_run()
-                r.text = "事実の整理 → 推定メカニズム → 対応"; r.font.size = Pt(15); r.font.color.rgb = GRAY; _ea(r)
-        except Exception:
-            pass
+remove_content_ph(s)
+# 淡いアクセント帯＋大きめタイトル（明示配置で確実に表紙らしく）
+rrect(s, 0.0, 2.45, 13.333, 0.06, BLUE)
+rrect(s, 0.0, 4.55, 13.333, 0.04, RGBColor(0xC9, 0xD2, 0xD8))
+tf = tbx(s, 0.9, 2.75, 11.5, 1.6)
+P(tf, "製品DEG色相悪化　対応", 34, bold=True, color=DBLUE, first=True, space=4)
+P(tf, "事実の整理 → 推定メカニズム → 対応", 17, color=GRAY, space=2)
+tf2 = tbx(s, 0.9, 4.75, 11.5, 0.6)
+P(tf2, M.DATE, 14, color=GRAY, first=True)
 
 # ════════════════════════════════════════════════════════════
 # 2. 発生事象（事実）
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "発生事象（事実）")
-tf = tbx(s, 0.6, 1.5, 12.1, 5.4)
+tf = tbx(s, 0.55, 1.5, 6.7, 5.4)
 for i, t in enumerate(M.PHENOMENON):
-    P(tf, t, 15, bullet=True, first=(i == 0), space=10)
+    P(tf, t, 13.5, bullet=True, first=(i == 0), space=12)
+pic(s, FIG_APHA, 7.5, 2.0, w=5.4)
 
 # ════════════════════════════════════════════════════════════
 # 3. 着色物質（事実・推定）＋ ポリエナール構造
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "着色物質と着色現象")
-fb = rrect(s, 0.55, 1.45, 7.4, 2.3, C_OPE, line=LINE, lw=1.0)
+fb = rrect(s, 0.55, 1.4, 6.6, 2.35, C_OPE, line=LINE, lw=1.0)
 tf = fb.text_frame; tf.word_wrap = True; tf.vertical_anchor = MSO_ANCHOR.TOP
 tf.margin_left = Emu(int(0.12*IN)); tf.margin_top = Emu(int(0.06*IN))
 P(tf, "■ 確認した事実", 12.5, bold=True, color=DBLUE, first=True, space=2)
 for t in M.COLORANT_FACT: P(tf, t, 11, bullet=True, space=2)
-eb = rrect(s, 0.55, 3.95, 7.4, 2.95, C_LIT, line=LINE, lw=1.0)
+eb = rrect(s, 0.55, 3.9, 6.6, 3.0, C_LIT, line=LINE, lw=1.0)
 tf = eb.text_frame; tf.word_wrap = True; tf.vertical_anchor = MSO_ANCHOR.TOP
 tf.margin_left = Emu(int(0.12*IN)); tf.margin_top = Emu(int(0.06*IN))
 P(tf, "■ ここから読める推定", 12.5, bold=True, color=DBLUE, first=True, space=2)
 for t in M.COLORANT_EST: P(tf, t, 11, bullet=True, space=2)
-# 構造（ポリエナール）
-if os.path.exists(FIG_POLY):
-    pic(s, FIG_POLY, 8.25, 1.7, w=4.5)
-tf2 = tbx(s, 8.25, 4.9, 4.5, 2.0)
-P(tf2, "着色物質＝共役ポリエナール", 12, bold=True, color=DBLUE, first=True, space=2)
-P(tf2, "CH3-(CH=CH)n-CHO", 12, bold=True, color=INK, space=2)
-P(tf2, "共役が伸びるほど長波長化し、十分伸びると450nm（黄）。数〜10ppbの微量で発色。", 10.5, color=GRAY, space=2)
+# 右：UVスペクトル＋ポリエナール構造
+pic(s, FIG_UV, 7.35, 1.4, w=5.6)
+pic(s, FIG_POLY, 7.6, 4.7, w=5.1)
+tf2 = tbx(s, 7.4, 6.45, 5.6, 0.7)
+P(tf2, "着色物質＝共役ポリエナール CH3-(CH=CH)n-CHO（数〜10ppbで発色）", 10.5, bold=True, color=DBLUE, first=True)
 
 # ════════════════════════════════════════════════════════════
 # 4. 推定メカニズム（化学反応スキーム）
@@ -183,6 +185,31 @@ P(tf, "工程ごとの事実（運転・解放・RD）／文献・社外知見�
   11, color=GRAY, first=True)
 
 # ════════════════════════════════════════════════════════════
+# 6.5 工程別サマリ（Excelグリッドの織り込み：工程×裏付け強度×小結論）
+# ════════════════════════════════════════════════════════════
+s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "工程別サマリ（事実の裏付け強度と小結論）")
+tf = tbx(s, 0.6, 1.32, 12.1, 0.5)
+P(tf, "裏付け強度 ◎事実複数で確定／○一部事実＋原理／△収支・原理のみで確度低。工程ごとの事実の詳細は「事実整理（工程別グリッド）」に集約。", 10.5, color=GRAY, first=True)
+concl = M.GRID[-1][2]
+t3 = s.shapes.add_table(len(M.STAGES)+1, 3, Emu(int(0.6*IN)), Emu(int(1.95*IN)), Emu(int(12.1*IN)), Emu(int(4.75*IN))).table
+t3.columns[0].width = Emu(int(3.0*IN)); t3.columns[1].width = Emu(int(1.4*IN)); t3.columns[2].width = Emu(int(7.7*IN))
+def cell3(i, j, text, bold=False, fill=WHITE, color=INK, size=11, align=None):
+    c = t3.cell(i, j); c.text = ""; c.vertical_anchor = MSO_ANCHOR.MIDDLE
+    c.margin_top = Emu(int(0.03*IN)); c.margin_bottom = Emu(int(0.03*IN)); c.margin_left = Emu(int(0.06*IN))
+    p = c.text_frame.paragraphs[0]
+    if align is not None: p.alignment = align
+    r = p.add_run(); r.text = text; r.font.size = Pt(size); r.font.bold = bold; r.font.color.rgb = color; _ea(r)
+    c.fill.solid(); c.fill.fore_color.rgb = fill
+cell3(0, 0, "工程", bold=True, color=DBLUE, fill=H_FILL)
+cell3(0, 1, "裏付け", bold=True, color=DBLUE, fill=H_FILL, align=PP_ALIGN.CENTER)
+cell3(0, 2, "この工程で言えること", bold=True, color=DBLUE, fill=H_FILL)
+symcol = {"◎": BLUE, "○": DBLUE, "△": RGBColor(0xC0, 0x7A, 0x00)}
+for i, (stg, sym, c6) in enumerate(zip(M.STAGES, M.STRENGTH, concl), 1):
+    cell3(i, 0, stg.replace("\n", " "), bold=True, color=DBLUE, fill=PROC, size=10.5)
+    cell3(i, 1, sym, bold=True, color=symcol.get(sym, DBLUE), fill=WHITE, size=15, align=PP_ALIGN.CENTER)
+    cell3(i, 2, c6, size=10)
+
+# ════════════════════════════════════════════════════════════
 # 7. なぜ今回（条件の重なり）
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "なぜ今回だけ起きたか（条件の重なり）")
@@ -202,10 +229,13 @@ for head, txt, act in M.WHY_NOW:
 # 8. 設備（鉄サビ）は主因でない
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "設備（鉄サビ）は色相の主因ではない")
-tf = tbx(s, 0.6, 1.5, 12.1, 5.4)
+tf = tbx(s, 0.55, 1.5, 7.0, 5.4)
 for i, t in enumerate(M.RUST):
     last = (i == len(M.RUST) - 1)
-    P(tf, t, 13.5, bullet=True, first=(i == 0), bold=last, color=(DBLUE if last else INK), space=11)
+    P(tf, t, 12, bullet=True, first=(i == 0), bold=last, color=(DBLUE if last else INK), space=12)
+pic(s, FIG_UV, 7.7, 2.25, w=5.4)
+tf2 = tbx(s, 7.7, 5.55, 5.4, 0.8)
+P(tf2, "付着物は380nmのみ・実機は450nm＝別現象（保管試験で確認）", 10.5, bold=True, color=DBLUE, first=True)
 
 # ════════════════════════════════════════════════════════════
 # 9. 開放・検査（機器ごと）
@@ -229,21 +259,32 @@ for i, (eq, txt) in enumerate(rows, 1):
 # 10. 対応（運転条件）
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "対応（再発防止・スタートアップ運転条件）")
-tf = tbx(s, 0.6, 1.5, 12.1, 5.4)
-for head, txt, conf in M.COUNTERMEASURE:
-    p = tf.add_paragraph()
-    r = p.add_run(); r.text = "【" + head + "】 "; r.font.size = Pt(13); r.font.bold = True; r.font.color.rgb = DBLUE; _ea(r)
-    r2 = p.add_run(); r2.text = txt + " "; r2.font.size = Pt(12); r2.font.color.rgb = INK; _ea(r2)
-    r3 = p.add_run(); r3.text = "（" + conf + "）"; r3.font.size = Pt(11.5); r3.font.bold = True; r3.font.color.rgb = BLUE; _ea(r3)
-    p.space_after = Pt(8)
+rows = M.COUNTERMEASURE
+t4 = s.shapes.add_table(len(rows)+1, 3, Emu(int(0.6*IN)), Emu(int(1.5*IN)), Emu(int(12.1*IN)), Emu(int(5.0*IN))).table
+t4.columns[0].width = Emu(int(2.6*IN)); t4.columns[1].width = Emu(int(7.7*IN)); t4.columns[2].width = Emu(int(1.8*IN))
+def cell4(i, j, text, bold=False, fill=WHITE, color=INK, size=11, align=None):
+    c = t4.cell(i, j); c.text = ""; c.vertical_anchor = MSO_ANCHOR.MIDDLE
+    c.margin_top = Emu(int(0.03*IN)); c.margin_bottom = Emu(int(0.03*IN)); c.margin_left = Emu(int(0.06*IN))
+    p = c.text_frame.paragraphs[0]
+    if align is not None: p.alignment = align
+    r = p.add_run(); r.text = text; r.font.size = Pt(size); r.font.bold = bold; r.font.color.rgb = color; _ea(r)
+    c.fill.solid(); c.fill.fore_color.rgb = fill
+cell4(0, 0, "項目", bold=True, color=DBLUE, fill=H_FILL)
+cell4(0, 1, "内容", bold=True, color=DBLUE, fill=H_FILL)
+cell4(0, 2, "状況", bold=True, color=DBLUE, fill=H_FILL, align=PP_ALIGN.CENTER)
+for i, (head, txt, conf) in enumerate(rows, 1):
+    cell4(i, 0, head, bold=True, color=DBLUE, fill=PROC, size=10.5)
+    cell4(i, 1, txt, size=9.5)
+    cell4(i, 2, conf, size=9.5, align=PP_ALIGN.CENTER)
 
 # ════════════════════════════════════════════════════════════
 # 11. 品質管理・早期判定
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "出荷再開に向けた品質管理・早期判定")
-tf = tbx(s, 0.6, 1.5, 12.1, 5.4)
+tf = tbx(s, 0.55, 1.5, 7.1, 5.4)
 for i, t in enumerate(M.QC):
-    P(tf, t, 13, bullet=True, first=(i == 0), space=10)
+    P(tf, t, 12, bullet=True, first=(i == 0), space=11)
+pic(s, FIG_UV450, 7.8, 2.5, w=5.3)
 
 # ════════════════════════════════════════════════════════════
 # 12. 承認のお願い
