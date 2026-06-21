@@ -8,7 +8,9 @@ from matplotlib.patches import FancyBboxPatch, FancyArrow
 import matplotlib.font_manager as fm
 
 fp = fm.FontProperties(fname="/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf")
-NAVY = "#1F3864"; BLUE = "#2E5BA8"; LIGHT = "#EAEFF7"; GREEN = "#2E7D32"; RED = "#C0392B"; GRAY = "#555555"
+# 薄いMC配色（濃色は使わない。テキスト/枠線にMCブルー、塗りは淡色）
+NAVY = "#003F7E"; BLUE = "#005BAB"; LIGHT = "#EBEFF2"; GREEN = "#005BAB"; RED = "#005BAB"; GRAY = "#666666"
+TANK = "#FFF6E0"  # 着色の場（タンク）を淡いアンバーで強調
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "outputs", "mechanism_flow.png")
 
@@ -27,8 +29,9 @@ n = len(steps); bw = 16.5; gap = (100 - n*bw) / (n+1)
 x = gap; yb = 16; bh = 11
 centers = []
 for (name, mech, col) in steps:
+    fc = TANK if "タンク" in name else LIGHT
     box = FancyBboxPatch((x, yb), bw, bh, boxstyle="round,pad=0.3,rounding_size=1.2",
-                         linewidth=2, edgecolor=col, facecolor=LIGHT)
+                         linewidth=2, edgecolor=col, facecolor=fc)
     ax.add_patch(box)
     ax.text(x+bw/2, yb+bh-2.4, name, ha="center", va="top", fontproperties=fp,
             fontsize=12.5, fontweight="bold", color=col)
