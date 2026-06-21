@@ -143,10 +143,9 @@ sec2.page_width, sec2.page_height = sec2.page_height, sec2.page_width
 
 # 4
 h("4. なぜ今回だけDEGまで到達し着色したか")
-note("過去にもアルデヒドが高い時期はあったが今回のような色相悪化は起きていない。アルデヒド単独でなく、反応させてしまう条件が今回そろった。")
+note(M.WHY_CONTEXT)
 for head, txt, act in M.WHY_NOW:
     body("【" + head + "】 " + txt + "　" + act, bullet=True)
-note("※ " + M.WATER_NOTE)
 
 # 5
 h("5. 設備（鉄サビ・付着物）の関与の評価")

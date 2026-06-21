@@ -18,6 +18,7 @@ EA = "游ゴシック"
 # 薄いMC配色
 BLUE = RGBColor(0x00, 0x5B, 0xAB)
 DBLUE = RGBColor(0x00, 0x3F, 0x7E)
+BLACK = RGBColor(0x00, 0x00, 0x00)
 INK = RGBColor(0x22, 0x22, 0x22)
 GRAY = RGBColor(0x66, 0x66, 0x66)
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
@@ -63,7 +64,7 @@ def set_title(s, text):
         if ph.placeholder_format.idx == 0:
             ph.text = ""
             r = ph.text_frame.paragraphs[0].add_run(); r.text = text
-            r.font.size = Pt(22); r.font.bold = True; r.font.color.rgb = DBLUE; _ea(r)
+            r.font.size = Pt(24); r.font.bold = True; r.font.color.rgb = BLACK; _ea(r)
             return
 
 def remove_content_ph(s):
@@ -115,6 +116,75 @@ def pic(s, path, l, t, w=None, h=None):
     if os.path.exists(path):
         s.shapes.add_picture(path, Emu(int(l*IN)), Emu(int(t*IN)), **kw)
 
+def arrow(s, l, t, w, h, color=None):
+    sp = s.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, Emu(int(l*IN)), Emu(int(t*IN)), Emu(int(w*IN)), Emu(int(h*IN)))
+    sp.fill.solid(); sp.fill.fore_color.rgb = (color or BLUE); sp.line.fill.background(); sp.shadow.inherit = False
+    return sp
+
+def vbox(s, l, t, w, h, lines, fill, line=None, lw=1.0):
+    """縦並びテキスト入りの角丸ボックス（ネイティブ・編集可能）。lines=[(text,size,bold,color)]"""
+    sp = rrect(s, l, t, w, h, fill, line=line, lw=lw)
+    tf = sp.text_frame; tf.word_wrap = True; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+    tf.margin_left = Emu(int(0.06*IN)); tf.margin_right = Emu(int(0.06*IN))
+    tf.margin_top = Emu(int(0.04*IN)); tf.margin_bottom = Emu(int(0.04*IN))
+    for i, (t2, sz, b, c) in enumerate(lines):
+        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph(); p.alignment = PP_ALIGN.CENTER
+        r = p.add_run(); r.text = t2; r.font.size = Pt(sz); r.font.bold = b; r.font.color.rgb = (c or INK); _ea(r)
+    return sp
+
+def native_mechanism(s):
+    """推定メカニズム＝アルドール縮合で共役が伸びる過程をネイティブ図形で（化学式は編集可能なテキスト）。"""
+    boxes = [
+        [("アセトアルデヒド", 12, True, DBLUE), ("CH3CHO", 12, False, BLACK), ("（種）", 10, False, GRAY)],
+        [("クロトンアルデヒド", 12, True, DBLUE), ("CH3-CH=CH-CHO", 12, False, BLACK), ("共役2", 10, False, GRAY)],
+        [("短い前駆体", 12, True, DBLUE), ("CH3-(CH=CH)3-CHO", 12, False, BLACK), ("共役4・UV330nm", 10, False, GRAY)],
+        [("ポリエナール", 12, True, RGBColor(0xC0, 0x7A, 0x00)), ("CH3-(CH=CH)n-CHO", 12, False, BLACK), ("450nm・黄", 10.5, True, RGBColor(0xC0, 0x7A, 0x00))],
+    ]
+    conds = ["アルドール縮合＋脱水(−H2O)", "逐次縮合", "タンクで熟成"]
+    bw = 2.72; y = 2.55; bh = 1.75; x = 0.55; gap = (12.7 - 0.55 - 4 * bw) / 3
+    centers = []
+    fills = [H_FILL, H_FILL, H_FILL, AMBER]
+    for k, b in enumerate(boxes):
+        vbox(s, x, y, bw, bh, b, fills[k], line=(RGBColor(0xC0, 0x7A, 0x00) if k == 3 else BLUE), lw=1.25)
+        centers.append(x + bw)
+        x += bw + gap
+    for k in range(3):
+        ax0 = centers[k]; aw = gap
+        arrow(s, ax0 + 0.04, y + bh / 2 - 0.16, aw - 0.08, 0.32)
+        tcx = ax0 + aw / 2
+        tb = tbx(s, ax0 - 0.25, y - 0.5, aw + 0.5, 0.45)
+        P(tb, conds[k], 9.5, color=DBLUE, first=True, align=PP_ALIGN.CENTER)
+    note = tbx(s, 0.55, 4.55, 12.15, 0.5)
+    P(note, "一般式 CH3-(CH=CH)n-CHO ：共役（CH=CH）が伸びるほど吸収が長波長化し、十分伸びると450nm（黄）。微量（ppbオーダー）で発色。",
+      11.5, bold=True, color=BLACK, first=True, align=PP_ALIGN.CENTER)
+
+def native_flow(s):
+    """工程フローをネイティブ図形で（編集可能）。"""
+    stages = [
+        ("EO反応系", "①アルデヒド増加"),
+        ("EG反応系", "グリコールと共存"),
+        ("EG濃縮系", "大半パージ"),
+        ("EG脱水系", "縮合が進む"),
+        ("MEG精製系", "通過点"),
+        ("DEG精製系", "②前駆体生成\n330nm"),
+        ("製品タンク", "③熟成→450nm"),
+    ]
+    n = len(stages); y = 2.4; bh = 1.9; x = 0.5
+    bw = 1.5; gap = (12.85 - 0.5 - n * bw) / (n - 1)
+    centers = []
+    for k, (nm, role) in enumerate(stages):
+        last = (k == n - 1)
+        lines = [(nm, 11, True, (RGBColor(0xC0, 0x7A, 0x00) if last else DBLUE))]
+        for rl in role.split("\n"):
+            lines.append((rl, 9.5, False, BLACK))
+        vbox(s, x, y, bw, bh, lines, (AMBER if last else H_FILL), line=(RGBColor(0xC0, 0x7A, 0x00) if last else BLUE), lw=1.1)
+        centers.append(x + bw)
+        x += bw + gap
+    for k in range(n - 1):
+        arrow(s, centers[k] + 0.02, y + bh / 2 - 0.13, gap - 0.04, 0.26)
+    bar = rrect(s, 0.5, 4.65, 12.35, 0.8, RGBColor(0xF5, 0xF5, 0xF5), line=RGBColor(0xC9, 0xD2, 0xD8), lw=1.0)
+    boxtext(bar, [("酸素があると前駆体が有機酸へ酸化され縮合が進みにくい：窒素タンクで進み、大気接触（ドラム・SP）で止まる。", 11.5, True, BLACK)], align=PP_ALIGN.CENTER)
+
 FIG_FLOW = os.path.join(OUTDIR, "mechanism_flow.png")
 FIG_ALDOL = os.path.join(OUTDIR, "aldol_scheme.png")
 FIG_POLY = os.path.join(OUTDIR, "polyenal_long.png")
@@ -131,7 +201,7 @@ remove_content_ph(s)
 rrect(s, 0.0, 2.45, 13.333, 0.06, BLUE)
 rrect(s, 0.0, 4.55, 13.333, 0.04, RGBColor(0xC9, 0xD2, 0xD8))
 tf = tbx(s, 0.9, 2.75, 11.5, 1.6)
-P(tf, "製品DEG色相悪化　対応", 34, bold=True, color=DBLUE, first=True, space=4)
+P(tf, "製品DEG色相悪化　対応", 34, bold=True, color=BLACK, first=True, space=4)
 P(tf, "事実の整理 → 推定メカニズム → 対応", 17, color=GRAY, space=2)
 tf2 = tbx(s, 0.9, 4.75, 11.5, 0.6)
 P(tf2, M.DATE, 14, color=GRAY, first=True)
@@ -150,7 +220,7 @@ for t1, t2 in road:
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "概要")
 y = 1.55
-tagfill = {"事実": C_OPE, "仮説": C_LIT, "対応": H_FILL, "ご依頼": C_SUJI}
+tagfill = {"事実": C_OPE, "仮説": C_LIT, "対応": H_FILL, "進め方": C_SUJI}
 for lab, txt in M.SUMMARY:
     bx = rrect(s, 0.6, y, 12.1, 1.18, tagfill.get(lab, H_FILL), line=LINE, lw=1.0)
     tag = rrect(s, 0.8, y + 0.32, 1.5, 0.54, WHITE, line=BLUE, lw=1.25)
@@ -165,7 +235,7 @@ for lab, txt in M.SUMMARY:
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "発生事象（事実）")
 tf = tbx(s, 0.55, 1.5, 6.7, 5.4)
 for i, t in enumerate(M.PHENOMENON):
-    P(tf, t, 13.5, bullet=True, first=(i == 0), space=12)
+    P(tf, t, 15, bullet=True, first=(i == 0), space=14)
 pic(s, FIG_APHA, 7.5, 2.0, w=5.4)
 
 # ════════════════════════════════════════════════════════════
@@ -192,20 +262,19 @@ P(tf2, "着色物質＝共役ポリエナール CH3-(CH=CH)n-CHO（数〜10ppb�
 # 4. 推定メカニズム（化学反応スキーム）
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, M.MECH_CAPTION)
-pic(s, FIG_ALDOL, 0.5, 1.45, w=12.33)
-tf = tbx(s, 0.6, 5.55, 12.1, 1.0)
-P(tf, "一筋： " + M.MECH_ONELINE, 12.5, bold=True, color=DBLUE, first=True, space=3)
-tf2 = tbx(s, 0.6, 6.75, 12.1, 0.6)
-P(tf2, "※ " + M.MECH_CAVEAT, 10, color=GRAY, first=True)
+native_mechanism(s)
+tf = tbx(s, 0.55, 5.25, 12.15, 1.0)
+P(tf, "一筋： " + M.MECH_ONELINE, 13, bold=True, color=BLACK, first=True, space=3)
+tf2 = tbx(s, 0.55, 6.5, 12.15, 0.7)
+P(tf2, "※ " + M.MECH_CAVEAT, 11, color=GRAY, first=True)
 
 # ════════════════════════════════════════════════════════════
 # 5. 工程フロー（どこで何が起きるか）※工程別グリッドの詳細は事実整理Excelに集約
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "縮合は脱水塔以降で起こる（工程フロー）")
-pic(s, FIG_FLOW, 0.35, 1.75, w=12.6)
-tf = tbx(s, 0.6, 5.7, 12.1, 1.2)
-P(tf, "工程ごとの事実（運転・解放・RD）／文献・社外知見／一般原理の切り分けは「事実整理（工程別グリッド）」に整理。",
-  11, color=GRAY, first=True)
+native_flow(s)
+tf = tbx(s, 0.55, 5.6, 12.15, 1.2)
+P(tf, "工程ごとの事実（運転・開放・RD）と一般原理の切り分けは「事実整理（工程別グリッド）」に整理。", 11, color=GRAY, first=True)
 
 # ════════════════════════════════════════════════════════════
 # 6.5 工程別サマリ（Excelグリッドの織り込み：工程×裏付け強度×小結論）
@@ -236,17 +305,17 @@ for i, (stg, sym, c6) in enumerate(zip(M.STAGES, M.STRENGTH, concl), 1):
 # 7. なぜ今回（条件の重なり）
 # ════════════════════════════════════════════════════════════
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "なぜ今回だけ起きたか（条件の重なり）")
-tf = tbx(s, 0.6, 1.45, 12.1, 0.5)
-P(tf, "過去にもアルデヒドが高い時期はあったが、今回は反応させてしまう条件がそろった。", 12.5, color=GRAY, first=True)
-y = 2.05
+tf = tbx(s, 0.6, 1.4, 12.1, 0.8)
+P(tf, M.WHY_CONTEXT, 13, color=GRAY, first=True)
+y = 2.4
 for head, txt, act in M.WHY_NOW:
-    bx = rrect(s, 0.6, y, 12.1, 1.05, H_FILL, line=LINE, lw=1.0)
+    bx = rrect(s, 0.6, y, 12.1, 1.25, H_FILL, line=LINE, lw=1.0)
     tf = bx.text_frame; tf.word_wrap = True; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-    tf.margin_left = Emu(int(0.14*IN))
-    p = tf.paragraphs[0]; r = p.add_run(); r.text = "【" + head + "】 "; r.font.size = Pt(13); r.font.bold = True; r.font.color.rgb = DBLUE; _ea(r)
-    r2 = p.add_run(); r2.text = txt; r2.font.size = Pt(11.5); r2.font.color.rgb = INK; _ea(r2)
-    p2 = tf.add_paragraph(); r3 = p2.add_run(); r3.text = act; r3.font.size = Pt(11.5); r3.font.bold = True; r3.font.color.rgb = BLUE; _ea(r3)
-    y += 1.16
+    tf.margin_left = Emu(int(0.16*IN)); tf.margin_right = Emu(int(0.12*IN))
+    p = tf.paragraphs[0]; r = p.add_run(); r.text = "【" + head + "】 "; r.font.size = Pt(14.5); r.font.bold = True; r.font.color.rgb = DBLUE; _ea(r)
+    r2 = p.add_run(); r2.text = txt; r2.font.size = Pt(13); r2.font.color.rgb = INK; _ea(r2)
+    p2 = tf.add_paragraph(); r3 = p2.add_run(); r3.text = act; r3.font.size = Pt(13); r3.font.bold = True; r3.font.color.rgb = BLUE; _ea(r3)
+    y += 1.38
 
 # ════════════════════════════════════════════════════════════
 # 8. 設備（鉄サビ）は主因でない
@@ -262,7 +331,7 @@ _pts = [
 for i, t in enumerate(_pts):
     P(tf, t, 13, bullet=True, first=(i == 0), space=16)
 concl = rrect(s, 0.55, 5.75, 12.2, 0.95, C_SUJI, line=BLUE, lw=1.0)
-boxtext(concl, [("→ 鉄サビ・付着物は色相（450nm）の主因でなく、寄与は局所380nm。実測で判断（金属が無くてもアルデヒドとpHで着色を説明できる）。洗浄は予防保全。", 12, True, DBLUE)])
+boxtext(concl, [("→ 鉄サビ・付着物は色相（450nm）の主因ではなく、寄与は局所の380nmにとどまる。保管試験・残液分析の実測で判断。付着物は洗浄して除去する。", 12.5, True, BLACK)])
 
 # ════════════════════════════════════════════════════════════
 # 9. 開放・検査（機器ごと）
@@ -310,7 +379,7 @@ for i, (head, txt, conf) in enumerate(rows, 1):
 s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "出荷再開に向けた品質管理・早期判定")
 tf = tbx(s, 0.55, 1.5, 7.1, 5.4)
 for i, t in enumerate(M.QC):
-    P(tf, t, 12, bullet=True, first=(i == 0), space=11)
+    P(tf, t, 13, bullet=True, first=(i == 0), space=12)
 pic(s, FIG_UV450, 7.8, 2.5, w=5.3)
 
 # ════════════════════════════════════════════════════════════
@@ -336,10 +405,10 @@ for i, (k, v) in enumerate(rows, 1):
 # ════════════════════════════════════════════════════════════
 # 12. 承認のお願い
 # ════════════════════════════════════════════════════════════
-s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "出荷再開の判断（ご承認のお願い）")
+s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "スタートアップに向けて（対応と進め方）")
 steps = [
-    ("① まず出口実測で歯止め", "初期流動品は、全項目が規格内、かつタンク保管中のUV・色相が経時で不変であることを確認したうえでのみ出荷する。仮説の真偽に依らず、実測で歯止めをかける。"),
-    ("② それを支える対応", "触媒交換（実施済）・設備洗浄・運転条件（NaOH非投入／温度を下げない／リン酸で緩和）。早期判定はUV450nm主・UV330補助。判定基準の具体値は本会議で確定。"),
+    ("① 対応は整った", "触媒交換（実施済）・設備洗浄（実施済）・運転条件（NaOH非投入／MEG塔温度を下げない／リン酸で緩和）。色相悪化の再発を抑える備えができた。"),
+    ("② 出口実測で歯止めをかけながら進める", "初期流動品が全項目規格内、かつタンク保管中のUV・色相が経時で不変であることを確認しながら出荷を再開する。仮説の真偽に依らず実測で歯止め。判定基準の具体値は本会議で確定。"),
     ("③ なぜ起きたか（参考）", "触媒劣化で増えたアルデヒドが縮合して前駆体になり、タンクで熟成・共役伸長して450nm（最有力仮説・ベンチ未再現）。"),
 ]
 y = 1.5
@@ -347,11 +416,36 @@ for head, txt in steps:
     bx = rrect(s, 0.6, y, 12.1, 1.18, H_FILL, line=LINE, lw=1.0)
     tf = bx.text_frame; tf.word_wrap = True; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
     tf.margin_left = Emu(int(0.16*IN)); tf.margin_right = Emu(int(0.12*IN))
-    p = tf.paragraphs[0]; r = p.add_run(); r.text = head; r.font.size = Pt(13.5); r.font.bold = True; r.font.color.rgb = DBLUE; _ea(r)
-    p2 = tf.add_paragraph(); r2 = p2.add_run(); r2.text = txt; r2.font.size = Pt(11.5); r2.font.color.rgb = INK; _ea(r2)
+    p = tf.paragraphs[0]; r = p.add_run(); r.text = head; r.font.size = Pt(14); r.font.bold = True; r.font.color.rgb = BLACK; _ea(r)
+    p2 = tf.add_paragraph(); r2 = p2.add_run(); r2.text = txt; r2.font.size = Pt(12); r2.font.color.rgb = INK; _ea(r2)
     y += 1.3
 bar = rrect(s, 0.6, 5.55, 12.1, 0.95, C_SUJI, line=BLUE, lw=1.25)
-boxtext(bar, [("上記の前提（出口実測での歯止め）で、製品DEGの出荷再開についてご承認をお願いします。", 15, True, DBLUE)], align=PP_ALIGN.CENTER)
+boxtext(bar, [("上記の対応と出口実測の歯止めのもとで、プラントのスタートアップを進める。", 15.5, True, BLACK)], align=PP_ALIGN.CENTER)
+
+# ════════════════════════════════════════════════════════════
+# 付録 工程別グリッド（横＝工程／縦＝項目）＝事実整理Excelと同じ表
+# ════════════════════════════════════════════════════════════
+s = newslide(LY_TEXT); remove_content_ph(s); set_title(s, "（参考）工程別グリッド")
+tf = tbx(s, 0.35, 1.28, 12.6, 0.45)
+P(tf, "横＝工程／縦＝項目。空欄＝確実な情報なし（無理に埋めない）。◎○△＝裏付けの強さ。色＝緑：事実／灰：一般原理／青灰：小結論。", 10, color=GRAY, first=True)
+ncol = 1 + len(M.STAGES); nrow = 2 + len(M.GRID)
+tgrid = s.shapes.add_table(nrow, ncol, Emu(int(0.35*IN)), Emu(int(1.78*IN)), Emu(int(12.6*IN)), Emu(int(5.3*IN))).table
+tgrid.columns[0].width = Emu(int(1.5*IN))
+for j in range(1, ncol): tgrid.columns[j].width = Emu(int((12.6 - 1.5) / 7 * IN))
+def gc(i, j, text, bold=False, fill=WHITE, color=INK, size=7.5):
+    c = tgrid.cell(i, j); c.text = ""; c.vertical_anchor = MSO_ANCHOR.TOP
+    c.margin_left = Emu(int(0.03*IN)); c.margin_right = Emu(int(0.02*IN)); c.margin_top = Emu(int(0.02*IN)); c.margin_bottom = Emu(int(0.02*IN))
+    p = c.text_frame.paragraphs[0]; r = p.add_run(); r.text = text; r.font.size = Pt(size); r.font.bold = bold; r.font.color.rgb = color; _ea(r)
+    c.fill.solid(); c.fill.fore_color.rgb = fill
+gc(0, 0, "項目", bold=True, color=DBLUE, fill=H_FILL, size=8)
+for j, stg in enumerate(M.STAGES, 1): gc(0, j, stg.replace("\n", " "), bold=True, color=DBLUE, fill=PROC, size=7.5)
+gc(1, 0, "裏付け強度", bold=True, color=DBLUE, fill=H_FILL, size=8)
+symcol2 = {"◎": BLUE, "○": DBLUE, "△": RGBColor(0xC0, 0x7A, 0x00)}
+for j, sym in enumerate(M.STRENGTH, 1): gc(1, j, sym, bold=True, color=symcol2.get(sym, DBLUE), fill=WHITE, size=12)
+KINDF = {"fact": C_OPE, "principle": RGBColor(0xF1, 0xF1, 0xF1), "concl": C_SUJI}
+for i, (label, kind, cells) in enumerate(M.GRID, 2):
+    gc(i, 0, label, bold=True, color=DBLUE, fill=H_FILL, size=7.5)
+    for j, val in enumerate(cells, 1): gc(i, j, val, fill=KINDF.get(kind, WHITE), size=7)
 
 # ── 元テンプレートの既存8枚を除去（新規スライドだけ残す） ──
 sldIdLst = prs.slides._sldIdLst

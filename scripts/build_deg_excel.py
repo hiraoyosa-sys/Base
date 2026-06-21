@@ -96,16 +96,15 @@ ws2.freeze_panes = "A3"
 
 # ═══ Sheet3 なぜ今回 ═══
 ws3 = wb.create_sheet("なぜ今回起きたか"); ws3.sheet_view.showGridLines = False
-C(ws3, 1, 1, "なぜ今回だけDEGまで到達し着色したか（条件の重なり）", bold=True, size=13, color=BLUE)
-header_row(ws3, 2, ["要因（位置づけ）", "内容", "対応"])
-r = 3
+C(ws3, 1, 1, "なぜ今回だけDEGまで到達し着色したか", bold=True, size=13, color=BLUE)
+C(ws3, 2, 1, M.WHY_CONTEXT, size=10, color="555555"); ws3.merge_cells("A2:C2"); ws3.row_dimensions[2].height = 30
+header_row(ws3, 3, ["要因（位置づけ）", "内容", "対応"])
+r = 4
 for head, txt, act in M.WHY_NOW:
     C(ws3, r, 1, head, bold=True, color=DBLUE, bg=PROC, va="center"); C(ws3, r, 2, txt); C(ws3, r, 3, act, color=BLUE, bold=True)
-    ws3.row_dimensions[r].height = 44; r += 1
-C(ws3, r, 1, "水分の注記", bold=True, color=DBLUE, bg=C_RD, va="center")
-C(ws3, r, 2, M.WATER_NOTE, bg=C_RD); C(ws3, r, 3, "", bg=C_RD); ws3.row_dimensions[r].height = 56
+    ws3.row_dimensions[r].height = 46; r += 1
 ws3.column_dimensions["A"].width = 30; ws3.column_dimensions["B"].width = 74; ws3.column_dimensions["C"].width = 24
-ws3.freeze_panes = "A3"
+ws3.freeze_panes = "A4"
 
 # ═══ Sheet4 設備・開放 ═══
 ws4 = wb.create_sheet("設備・開放"); ws4.sheet_view.showGridLines = False
