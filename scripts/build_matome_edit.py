@@ -16,6 +16,7 @@ EA = "游ゴシック"
 BLUE = RGBColor(0x00, 0x5B, 0xAB); DBLUE = RGBColor(0x00, 0x3F, 0x7E); BLACK = RGBColor(0x00, 0x00, 0x00)
 INK = RGBColor(0x22, 0x22, 0x22); GRAY = RGBColor(0x66, 0x66, 0x66); WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 H_FILL = RGBColor(0xEB, 0xEF, 0xF2); PROC = RGBColor(0xD7, 0xE0, 0xE5); AMBER = RGBColor(0xFF, 0xF6, 0xE0)
+AMBER_T = RGBColor(0xC0, 0x7A, 0x00)
 LINE = RGBColor(0xC9, 0xD2, 0xD8)
 
 prs = Presentation(SRC)
@@ -104,6 +105,53 @@ if s11:
         ("※ 色相悪化（450nm）そのものを再現するには至っていない（要追検証）。", False, GRAY),
     ], size=13)
 
+# ── S14 運転対応実績：タイトル改名＋『DEG色相への影響』列を記入（たたき台） ──
+s14 = slide_by_title("運転対応実績")
+if s14:
+    for ph in s14.placeholders:
+        if ph.placeholder_format.idx == 0:
+            tf = ph.text_frame; p0 = tf.paragraphs[0]
+            if p0.runs:
+                p0.runs[0].text = "運転対応実績とDEG色相への影響"
+                for ex in p0.runs[1:]: ex._r.getparent().remove(ex._r)
+            for p in tf.paragraphs[1:]: p._p.getparent().remove(p._p)
+    tbl = None
+    for sh in s14.shapes:
+        if sh.has_table: tbl = sh.table
+    if tbl is not None:
+        tbl.columns[0].width = Emu(int(4.6*IN)); tbl.columns[1].width = Emu(int(1.9*IN)); tbl.columns[2].width = Emu(int(5.37*IN))
+        WORSE = RGBColor(0xFC, 0xE4, 0xE4); WORSE_T = RGBColor(0xB0, 0x00, 0x00)
+        NONEF = RGBColor(0xF4, 0xF6, 0xF8); NONET = RGBColor(0x55, 0x55, 0x55)
+        def set_keep(cell, text):
+            tf = cell.text_frame; p0 = tf.paragraphs[0]
+            if p0.runs:
+                p0.runs[0].text = text
+                for ex in p0.runs[1:]: ex._r.getparent().remove(ex._r)
+            else:
+                r = p0.add_run(); r.text = text; _ea(r)
+            for p in tf.paragraphs[1:]: p._p.getparent().remove(p._p)
+        def fill_inf(cell, text, fill, color, bold=False, size=10):
+            tf = cell.text_frame; tf.word_wrap = True; cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+            cell.margin_left = Emu(int(0.06*IN)); cell.margin_right = Emu(int(0.06*IN))
+            p0 = tf.paragraphs[0]
+            for ex in list(p0.runs): ex._r.getparent().remove(ex._r)
+            for p in tf.paragraphs[1:]: p._p.getparent().remove(p._p)
+            r = p0.add_run(); r.text = text; r.font.size = Pt(size); r.font.bold = bold; r.font.color.rgb = color; _ea(r)
+            cell.fill.solid(); cell.fill.fore_color.rgb = fill
+        set_keep(tbl.cell(0, 2), "DEG色相への影響")
+        infmap = [
+            ("NaOH", "悪化させた可能性：塩基がアルデヒドどうしの反応を後押し。→S/U時はEOの不純物低減を確認のうえ投入を判断", WORSE, WORSE_T, False),
+            ("C-1501塔底温度", "悪化させた可能性：分解されず重い形で下流(DEG)へ回る（HUVは改善）。→S/U時は不純物・HUVを見て安易に下げない", WORSE, WORSE_T, False),
+            ("Na3PO4", "改善傾向の実績あり（色相の進みが緩やかになる）", AMBER, AMBER_T, True),
+        ]
+        for i in range(1, len(tbl.rows)):
+            item = tbl.cell(i, 0).text
+            chosen = next(((t, f, c, b) for k, t, f, c, b in infmap if k in item), None)
+            if chosen is None: chosen = ("明確な影響は確認されていない", NONEF, NONET, False)
+            fill_inf(tbl.cell(i, 2), *chosen)
+        lg = tbx(s14, 0.4, 6.45, 11.87, 0.5)
+        P(lg, "※ DEG色相への影響は現時点の見立て（たたき台）。 赤＝悪化の可能性 ／ 橙＝改善傾向 ／ 無印＝明確な影響は確認されていない（HUV・ALDに有意変化なし）", 9.5, color=GRAY, first=True)
+
 # ── 統合スライド『どこで・どういう反応が起こるか』（スライド5,6統合）を追加 ──
 ly = None
 for l in prs.slide_layouts:
@@ -136,7 +184,7 @@ zy = 2.42; zh = 0.36
 zb1 = rrect(s, lefts[0], zy, (lefts[2]+bw)-lefts[0], zh, RGBColor(0xF0, 0xF2, 0xF4), line=LINE, lw=0.75)
 zb1.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 p = zb1.text_frame.paragraphs[0]; p.alignment = PP_ALIGN.CENTER
-r = p.add_run(); r.text = "水が多い → 反応しない"; r.font.size = Pt(10.5); r.font.bold = True; r.font.color.rgb = GRAY; _ea(r)
+r = p.add_run(); r.text = "水が多い → アルデヒドはパージで系外（まだ色はつかない）"; r.font.size = Pt(10.5); r.font.bold = True; r.font.color.rgb = GRAY; _ea(r)
 zb2 = rrect(s, lefts[3], zy, (lefts[6]+bw)-lefts[3], zh, AMBER, line=AMBER_T, lw=1.0)
 zb2.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 p = zb2.text_frame.paragraphs[0]; p.alignment = PP_ALIGN.CENTER
@@ -146,29 +194,32 @@ r = p.add_run(); r.text = "色相悪化物質ができる反応場（水が少�
 yr = 3.55; rh = 1.5; zbot = zy + zh
 def conn(cx, color=GUIDE):
     rrect(s, cx-0.012, zbot, 0.024, yr-zbot, color)
-# アルデヒドはそのまま：EO反応系〜EG濃縮系（s0〜s2）をまたぐ
+# 上流：遊離アルデヒドは大半パージ・一部が別の形(前駆体)になって下流へ（EO反応系〜EG濃縮系 s0〜s2）
 fl = lefts[0]; fr = lefts[2] + bw
 vbox(s, fl, yr, fr-fl, rh,
-     [("アルデヒドはそのまま", 11.5, True, DBLUE), ("CH3CHO", 12, False, BLACK), ("（水が多いと反応しない）", 9.5, False, GRAY)],
+     [("アルデヒドが入る → 大半はパージで系外へ", 11, True, DBLUE),
+      ("CH3CHO（原料EO＋触媒劣化で増加・軽い）", 10, False, BLACK),
+      ("残りは別の形（色のもと＝前駆体）に変わって下流へ", 10, False, INK),
+      ("→ 濃縮塔の底では遊離アルデヒドとして検出されない", 9.5, True, AMBER_T)],
      H_FILL, line=BLUE)
 conn((fl+fr)/2)
 def rbox(ci, w, lines, fill=H_FILL, line=BLUE, lw=1.1):
     l = max(0.3, min(cxs[ci] - w/2, W-0.3-w))
     vbox(s, l, yr, w, rh, lines, fill, line=line, lw=lw); conn(cxs[ci])
 # EG脱水系（s3）：反応の始まり
-rbox(3, 2.0, [("ここから反応が始まる", 11.5, True, DBLUE), ("アルデヒドどうしが", 10, False, BLACK), ("つながり始める", 10, False, BLACK)])
+rbox(3, 2.0, [("水が抜けて反応場に", 11.5, True, DBLUE), ("前駆体どうしが", 10, False, BLACK), ("つながって育ち始める", 10, False, BLACK)])
 # MEG精製系（s4）：通過
 vbox(s, cxs[4]-0.9, yr+0.35, 1.8, rh-0.7, [("通過", 11, True, GRAY), ("新たな反応なし", 9.5, False, GRAY)],
      RGBColor(0xF2,0xF4,0xF6), line=LINE, lw=0.9); conn(cxs[4], RGBColor(0xD9,0xDF,0xE4))
 # DEG精製系（s5）：色のもと
-rbox(5, 2.15, [("色のもと（前駆体）ができる", 10.5, True, DBLUE), ("CH3-(CH=CH)3-CHO", 10, False, BLACK), ("まだ淡い・330nm", 9.5, False, GRAY)])
+rbox(5, 1.8, [("色のもと（前駆体）が育つ", 10, True, DBLUE), ("CH3-(CH=CH)3-CHO", 9.5, False, BLACK), ("まだ淡い・330nm", 9, False, GRAY)])
 # 製品タンク（s6）：色相悪化物質
-rbox(6, 2.2, [("色相悪化物質に育つ", 11, True, AMBER_T), ("CH3-(CH=CH)n-CHO", 10, False, BLACK), ("黄色・450nm", 10, True, AMBER_T)], fill=AMBER, line=AMBER_T, lw=1.25)
+rbox(6, 1.7, [("色相悪化物質に育つ", 10.5, True, AMBER_T), ("CH3-(CH=CH)n-CHO", 9, False, BLACK), ("黄色・450nm", 10, True, AMBER_T)], fill=AMBER, line=AMBER_T, lw=1.25)
 
 note = tbx(s, 0.4, 5.3, W-0.8, 1.7)
-P(note, "・水が多いEG反応〜濃縮では、アルデヒドはそのまま運ばれる（だから上流では色がつかない）。", 12.5, first=True, space=6)
-P(note, "・水が少なくなる脱水塔以降で、アルデヒドどうしがつながって大きくなり、色のもと（前駆体）ができる。製品タンクの長期保管でさらに大きくなって黄色（450nm）に。", 12.5, space=6)
-P(note, "・酸素があるとアルデヒドが別の物質（有機酸）に変わって反応が止まる（窒素タンクで進み、空気に触れると止まる）。温度を下げるとアルデヒドが分解されず下流へ回る。", 12.5, space=6)
+P(note, "・アルデヒドは軽いので濃縮系のパージで大半が系外へ抜ける。残りは別の形（色のもと＝前駆体）に変わって下流へ運ばれる＝濃縮塔の底では遊離アルデヒドとして検出されない（だから上流では色がつかない）。", 11.5, first=True, space=6)
+P(note, "・水が少なくなる脱水塔以降で、その前駆体どうしがつながって育ち、製品タンクの長期保管でさらに育って黄色（450nm）になる。前駆体を使い切るとAPHA30くらいで頭打ち。", 11.5, space=6)
+P(note, "・酸素があると（アルデヒドや前駆体が）有機酸に変わって反応が止まる（窒素タンクで進み、空気に触れると止まる）。MEG塔の温度を下げると分解されず重い形で下流（DEG）へ回る。", 11.5, space=6)
 
 # このスライドをメカニズム(S3)の直後へ移動
 sldIdLst = prs.slides._sldIdLst
