@@ -1,0 +1,5 @@
+# pptx_preview.py のレンダリング出力（スクラッチ・確認用）
+outputs/preview_*/
+# Python
+__pycache__/
+*.pyc
