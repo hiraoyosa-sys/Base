@@ -83,25 +83,25 @@ def body_textbox(s, l, t, w, h, bullets, size=14):
 s6 = slide_by_title("設備開放で確認された事実")
 if s6:
     body_textbox(s6, 0.7, 1.55, 12.0, 5.4, [
-        ("■ 推定メカニズム上、縮合は水が抜ける脱水塔以降で起こると考えられるため、EG精製系（脱水塔C-1404以降）を中心に開放・検査した。", True, DBLUE),
-        "EG精製系は塔・配管・タンクを開放。C-1503（DEG塔）トップの黒色付着物（ほぼ鉄サビ）以外に、異常な汚れ・活性金属・腐食は認められない（C-1501/C-1502はCS→SUS改造部を含め錆込みなし）。",
-        "唯一の異物（C-1503付着物・T-555/T-615内異物）は鉄サビで、DEGに加えても450nm（本件の着色）を作らないと基礎研で確認＝色相悪化の原因ではない。",
-        "各機器の肉厚は定修前の運転中に測定。原肉に対し有意な減肉なし。",
-        ("→ 設備・金属が原因で色相が悪化したのではないと判断。残る上流側はメカニズム上、縮合の場ではないため追加開放は不要。", True, DBLUE),
+        ("■ 色相悪化物質ができる反応は、水が少なくなる脱水塔以降で起こると考えられる。そこでEG精製系（脱水塔以降の塔・配管・タンク）を中心に開放・検査した。", True, DBLUE),
+        "開けた結果、DEG精製塔（C-1503）トップの黒色付着物（ほぼ鉄サビ）以外に、目立った汚れ・腐食・異物は見つからなかった。",
+        "その黒色付着物（鉄サビ）をDEGに加えて保管したところ、色相悪化の450nmは現れなかった（基礎研）。＝鉄サビは色相悪化の原因ではない。",
+        "各機器の肉厚を定修前に測定したが、有意な減りはなかった。",
+        ("→ 設備や金属が原因で色相が悪くなったのではないと判断。残る上流側は色相悪化物質ができる反応の場ではないため、これ以上開ける必要はない。", True, DBLUE),
     ], size=14)
 
 # ── S11 基礎研で検証された事実（空欄を記入） ──
 s11 = slide_by_title("基礎研で検証された事実")
 if s11:
-    body_textbox(s11, 0.7, 1.55, 12.0, 5.4, [
-        ("■ 着色物質の正体", True, DBLUE),
-        "GPCで分子量200〜800のブロード、GCの複数検体が457nmを捕捉＝共役ポリエナール類。存在量はppbオーダー（吸光度からの換算）。",
-        ("■ 鉄サビ・付着物の寄与", True, DBLUE),
-        "鉄サビ・C-1503付着物をDEGに添加しても380nmのみで450nmは出ない＝鉄サビは本件の着色を作らない。",
-        ("■ 反応の条件", True, DBLUE),
-        "酸素があると前駆体が有機酸へ酸化され縮合が進まない（窒素で進み、大気接触で止まる、と整合）。",
-        "アルデヒド（A/F-ALD）を添加しただけではDEGの450nmは再現しない＝アルデヒド単独でなく、低水分・塩基などの条件併存が必要。ラボでEG反応器出口を模擬した添加ではUVが悪化（共存でより大）。",
-        ("※ 定量的な再現は未達（要追検証）。", False, GRAY),
+    body_textbox(s11, 0.7, 1.5, 12.0, 5.6, [
+        ("■ 色相悪化物質の正体を調べた", True, DBLUE),
+        "着色物質をGPC・GCで分析した → 分子量200〜800の共役の長い化合物（ポリエナール類）と分かった。量はごく微量（ppbオーダー）。",
+        ("■ 鉄サビで色相悪化が起きるかを調べた", True, DBLUE),
+        "鉄サビ（C-1503付着物・タンク異物）をDEGに加えて保管した → 色相悪化の450nmは現れなかった。＝鉄サビは色相悪化物質を作らない。",
+        ("■ アルデヒドだけで色相悪化が起きるかを調べた", True, DBLUE),
+        "アルデヒド（A-ALD・F-ALD）をDEGに加えて保管した（12日） → 450nmは現れなかった。＝アルデヒドを加えただけでは色相悪化は再現しない。",
+        "ラボでEG反応系を模擬してアルデヒドを加えた → UV（短波長側）が悪化した（F-ALDとA-ALDの両方があるとより大きい）。＝アルデヒドがUV悪化のもとになることは確認。",
+        ("※ 色相悪化（450nm）そのものを再現するには至っていない（要追検証）。", False, GRAY),
     ], size=13)
 
 # ── 統合スライド『どこで・どういう反応が起こるか』（スライド5,6統合）を追加 ──
@@ -116,45 +116,59 @@ for ph in list(s.placeholders):
         ph._element.getparent().remove(ph._element)
 for ph in s.placeholders:
     if ph.placeholder_format.idx == 0:
-        ph.text = ""; r = ph.text_frame.paragraphs[0].add_run(); r.text = "どこで・どういう反応が起こるか（工程と反応）"
+        ph.text = ""; r = ph.text_frame.paragraphs[0].add_run(); r.text = "どこで色相悪化物質ができるか（工程と反応場）"
         r.font.size = Pt(24); r.font.bold = True; r.font.color.rgb = BLACK; _ea(r)
-# 上段：工程フロー（7段）
+AMBER_T = RGBColor(0xC0, 0x7A, 0x00); GUIDE = RGBColor(0xB8, 0xC4, 0xCC)
+# 上段：工程フロー（7段）。各工程の左端・中心を記録し、反応はその真下へ揃える
 stages = ["EO反応系", "EG反応系", "EG濃縮系", "EG脱水系", "MEG精製系", "DEG精製系", "製品タンク"]
-n = len(stages); bw = 1.5; gap = (W - 0.6 - n*bw) / (n - 1); x = 0.3; y = 1.55; bh = 0.85
-cx = []
+n = len(stages); bw = 1.55; gap = (W - 0.6 - n*bw) / (n - 1); x = 0.3; ytop = 1.45; bh = 0.78
+lefts = []; cxs = []
 for k, nm in enumerate(stages):
     last = (k == n-1)
-    vbox(s, x, y, bw, bh, [(nm, 11, True, (RGBColor(0xC0,0x7A,0x00) if last else DBLUE))],
-         (AMBER if last else H_FILL), line=(RGBColor(0xC0,0x7A,0x00) if last else BLUE))
-    cx.append(x + bw); x += bw + gap
+    vbox(s, x, ytop, bw, bh, [(nm, 11, True, (AMBER_T if last else DBLUE))],
+         (AMBER if last else H_FILL), line=(AMBER_T if last else BLUE))
+    lefts.append(x); cxs.append(x + bw/2); x += bw + gap
 for k in range(n-1):
-    arrow(s, cx[k]+0.02, y+bh/2-0.1, gap-0.04, 0.2)
-# 帯：水の有無
-band = rrect(s, 0.3, 2.5, W-0.6, 0.42, RGBColor(0xF5, 0xF8, 0xFC), line=LINE, lw=0.75)
-tfb = band.text_frame; tfb.vertical_anchor = MSO_ANCHOR.MIDDLE
-p = tfb.paragraphs[0]; p.alignment = PP_ALIGN.LEFT
-r = p.add_run(); r.text = "　水が多い（縮合は進まず、アルデヒドは遊離のまま）　｜　水が抜ける（脱水塔以降で縮合開始）　→　タンクで伸長"
-r.font.size = Pt(11); r.font.bold = True; r.font.color.rgb = DBLUE; _ea(r)
-# 下段：反応（分子）の進行
-mol = [
-    [("遊離アルデヒド", 11, True, DBLUE), ("CH3CHO", 12, False, BLACK), ("上流（水あり）", 9.5, False, GRAY)],
-    [("アルドール縮合", 11, True, DBLUE), ("→ 脱水(−H2O)", 11, False, BLACK), ("脱水塔以降", 9.5, False, GRAY)],
-    [("前駆体", 11, True, DBLUE), ("CH3-(CH=CH)3-CHO", 11, False, BLACK), ("共役4・UV330nm", 9.5, False, GRAY)],
-    [("ポリエナール", 11, True, RGBColor(0xC0,0x7A,0x00)), ("CH3-(CH=CH)n-CHO", 11, False, BLACK), ("共役〜9・450nm（黄）", 9.5, True, RGBColor(0xC0,0x7A,0x00))],
-]
-mw = 2.7; mgap = (W - 0.6 - 4*mw) / 3; mx = 0.3; my = 3.25; mh = 1.5; mcx = []
-for k, b in enumerate(mol):
-    vbox(s, mx, my, mw, mh, b, (AMBER if k == 3 else H_FILL), line=(RGBColor(0xC0,0x7A,0x00) if k == 3 else BLUE), lw=1.25)
-    mcx.append(mx + mw); mx += mw + mgap
-labels = ["アルドール縮合＋脱水", "逐次縮合", "タンクで伸長"]
-for k in range(3):
-    arrow(s, mcx[k]+0.03, my+mh/2-0.14, mgap-0.06, 0.28)
-    lt = tbx(s, mcx[k]-0.3, my-0.42, mgap+0.6, 0.4)
-    P(lt, labels[k], 9.5, color=DBLUE, first=True, align=PP_ALIGN.CENTER)
-note = tbx(s, 0.4, 5.1, W-0.8, 1.5)
-P(note, "・水が多いEG反応〜濃縮では縮合が進まず、アルデヒドは遊離のまま運ばれる。水が抜ける脱水塔以降で初めて縮合が進み、重い前駆体になってDEG留分へ。", 13, first=True, space=6)
-P(note, "・前駆体は製品タンクの長期保管（窒素）で互いに脱水縮合して共役が伸び、共役〜9で450nm＝黄色に着色する。使い切るとAPHA30程度で頭打ち。", 13, space=6)
-P(note, "・酸素があると前駆体が有機酸へ酸化され縮合が止まる（窒素タンクで進み、大気接触のドラム・SPで止まる）。温度を下げるとアルデヒドが分解されず下流へ回る。", 13, space=6)
+    arrow(s, lefts[k]+bw+0.01, ytop+bh/2-0.08, gap-0.02, 0.16)
+
+# 帯：どこが「反応場」か（工程の真下に色分け）
+zy = 2.42; zh = 0.36
+zb1 = rrect(s, lefts[0], zy, (lefts[2]+bw)-lefts[0], zh, RGBColor(0xF0, 0xF2, 0xF4), line=LINE, lw=0.75)
+zb1.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+p = zb1.text_frame.paragraphs[0]; p.alignment = PP_ALIGN.CENTER
+r = p.add_run(); r.text = "水が多い → 反応しない"; r.font.size = Pt(10.5); r.font.bold = True; r.font.color.rgb = GRAY; _ea(r)
+zb2 = rrect(s, lefts[3], zy, (lefts[6]+bw)-lefts[3], zh, AMBER, line=AMBER_T, lw=1.0)
+zb2.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+p = zb2.text_frame.paragraphs[0]; p.alignment = PP_ALIGN.CENTER
+r = p.add_run(); r.text = "色相悪化物質ができる反応場（水が少ない＝脱水塔以降）"; r.font.size = Pt(10.5); r.font.bold = True; r.font.color.rgb = AMBER_T; _ea(r)
+
+# 反応行：起こる工程の真下に配置（どこで・どれが起こるか）
+yr = 3.55; rh = 1.5; zbot = zy + zh
+def conn(cx, color=GUIDE):
+    rrect(s, cx-0.012, zbot, 0.024, yr-zbot, color)
+# アルデヒドはそのまま：EO反応系〜EG濃縮系（s0〜s2）をまたぐ
+fl = lefts[0]; fr = lefts[2] + bw
+vbox(s, fl, yr, fr-fl, rh,
+     [("アルデヒドはそのまま", 11.5, True, DBLUE), ("CH3CHO", 12, False, BLACK), ("（水が多いと反応しない）", 9.5, False, GRAY)],
+     H_FILL, line=BLUE)
+conn((fl+fr)/2)
+def rbox(ci, w, lines, fill=H_FILL, line=BLUE, lw=1.1):
+    l = max(0.3, min(cxs[ci] - w/2, W-0.3-w))
+    vbox(s, l, yr, w, rh, lines, fill, line=line, lw=lw); conn(cxs[ci])
+# EG脱水系（s3）：反応の始まり
+rbox(3, 2.0, [("ここから反応が始まる", 11.5, True, DBLUE), ("アルデヒドどうしが", 10, False, BLACK), ("つながり始める", 10, False, BLACK)])
+# MEG精製系（s4）：通過
+vbox(s, cxs[4]-0.9, yr+0.35, 1.8, rh-0.7, [("通過", 11, True, GRAY), ("新たな反応なし", 9.5, False, GRAY)],
+     RGBColor(0xF2,0xF4,0xF6), line=LINE, lw=0.9); conn(cxs[4], RGBColor(0xD9,0xDF,0xE4))
+# DEG精製系（s5）：色のもと
+rbox(5, 2.15, [("色のもと（前駆体）ができる", 10.5, True, DBLUE), ("CH3-(CH=CH)3-CHO", 10, False, BLACK), ("まだ淡い・330nm", 9.5, False, GRAY)])
+# 製品タンク（s6）：色相悪化物質
+rbox(6, 2.2, [("色相悪化物質に育つ", 11, True, AMBER_T), ("CH3-(CH=CH)n-CHO", 10, False, BLACK), ("黄色・450nm", 10, True, AMBER_T)], fill=AMBER, line=AMBER_T, lw=1.25)
+
+note = tbx(s, 0.4, 5.3, W-0.8, 1.7)
+P(note, "・水が多いEG反応〜濃縮では、アルデヒドはそのまま運ばれる（だから上流では色がつかない）。", 12.5, first=True, space=6)
+P(note, "・水が少なくなる脱水塔以降で、アルデヒドどうしがつながって大きくなり、色のもと（前駆体）ができる。製品タンクの長期保管でさらに大きくなって黄色（450nm）に。", 12.5, space=6)
+P(note, "・酸素があるとアルデヒドが別の物質（有機酸）に変わって反応が止まる（窒素タンクで進み、空気に触れると止まる）。温度を下げるとアルデヒドが分解されず下流へ回る。", 12.5, space=6)
 
 # このスライドをメカニズム(S3)の直後へ移動
 sldIdLst = prs.slides._sldIdLst
