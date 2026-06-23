@@ -10,7 +10,7 @@ P-1507 技術評価 rev9 を構築する。
 import openpyxl, xlsxwriter
 
 SRC = "outputs/P1507ストレーナ変更_技術評価_rev8.xlsx"
-DST = "outputs/P1507ストレーナ変更_技術評価_rev9.xlsx"
+DST = "outputs/P1507ストレーナ変更_技術評価_rev10.xlsx"
 
 wbf = openpyxl.load_workbook(SRC, data_only=False)
 wbv = openpyxl.load_workbook(SRC, data_only=True)
@@ -95,7 +95,7 @@ ws_prop   = copy_sheet(book, "④物性(Aspen)", fmt_cache)
 # 0_読み方 に ⑤ の行を追記
 title_blue = book.add_format({"font_color": "#1F4E79"})
 ws_read.write(9, 1, "⑤清掃周期")
-ws_read.write(9, 2, "操油課250メッシュ実績→ろ過面積比＋流量比で当方の清掃周期を換算(★回答待ち)")
+ws_read.write(9, 2, "操油課250メッシュの差圧上昇実績→ろ過面積比で当方の清掃周期を換算(★回答待ち)")
 
 # ============== 新シート ⑤清掃周期 ==============
 F = lambda **k: book.add_format(k)
@@ -110,136 +110,93 @@ f_outb   = F(border=1, bold=True)
 f_txt    = F(border=1)
 f_concl  = F(bold=True, text_wrap=True, valign="top")
 
-w = book.add_worksheet("⑤清掃周期")
-w.set_column(0, 0, 30); w.set_column(1, 1, 13); w.set_column(2, 2, 8); w.set_column(3, 3, 52)
+def A1(rr, col=1): return f"{chr(65+col)}{rr+1}"   # 0-index行 → Excel A1参照(既定B列)
 
-w.write(0, 0, "⑤ 清掃周期の見積り（操油課250メッシュ実績 → ろ過面積比換算）", f_title)
+w = book.add_worksheet("⑤清掃周期")
+w.set_column(0, 0, 30); w.set_column(1, 1, 13); w.set_column(2, 2, 8); w.set_column(3, 3, 54)
+
+w.write(0, 0, "⑤ 清掃周期の見積り（操油課250メッシュの差圧上昇実績 → ろ過面積比換算）", f_title)
 w.merge_range(1, 0, 1, 3,
-    "考え方：閉塞(清掃)までの時間 t ∝ ろ過面積 ÷ (通液流量 × 固形分濃度)。"
-    "操油課の250メッシュ実績(周期・面積・流量)を入力すれば、面積比＋流量比で当方の周期を"
-    "換算できる。固形分濃度はサービスが異なり不明のため同程度と仮置き(要確認)。"
-    "★＝操油課回答待ち(木村課長へ照会済)。初期は安全側で早めに点検し、起動時の閉塞速度と"
-    "CV開度トレンドで実機補正する。", f_note)
+    "考え方：清掃周期は『差圧がどの期間でどれくらい上がるか（上昇速度）』で決まる。"
+    "操油課250メッシュの差圧上昇速度を、ろ過面積比で当方へ換算する（面積が大きいほど"
+    "上昇は緩やか＝長持ち）。当方の許容差圧上昇はキャビ限界117−クリーン3.6＝約113kPa。"
+    "★＝操油課回答待ち(木村課長へ照会済)。初期は安全側で早めに点検し、起動時の差圧の"
+    "立ち方とCV開度トレンドで実機補正する。", f_note)
 w.set_row(1, 70)
 
 r = 3
-w.write(r, 0, "■ 入力：操油課 250メッシュ実績（★は回答待ち）", f_sec); r += 1
+w.write(r, 0, "■ 入力：操油課 250メッシュ 差圧上昇実績（★は回答待ち）", f_sec); r += 1
 for j, h in enumerate(["項目", "値", "単位", "出典・注記"]):
     w.write(r, j, h, f_hdr)
 r += 1
-R_Tref, R_Aref, R_Qref = r, r+1, r+2
-# 値はプレースホルダ（★）。データ到着後に上書きするだけで全結果が再計算される
+R_dPobs, R_tobs, R_Aref = r, r+1, r+2
 rows_in = [
- ("操油課 清掃(閉塞)周期 T_ref", 90,  "日",    "★操油課回答待ち（暫定90日）"),
- ("操油課 ろ過面積 A_ref",       200, "cm²",   "★操油課回答待ち（暫定200cm²）"),
- ("操油課 通液流量 Q_ref",       5.0, "m³/h",  "★操油課回答待ち（暫定5m³/h）"),
- ("操油課 閉塞時の状況(参考)",   "差圧上昇で清掃", "-", "★差圧の上がり方も照会中"),
+ ("操油課 差圧上昇量 ΔP_obs",  50, "kPa",  "★操油課回答待ち（清掃判断までに上がる差圧。暫定50）"),
+ ("操油課 計測期間 t_obs",     60, "日",   "★操油課回答待ち（その差圧が上がるのに要した期間。暫定60）"),
+ ("操油課 ろ過面積 A_ref",     50, "cm²",  "★操油課回答待ち（暫定50）"),
 ]
 for i, (a, b, c, d) in enumerate(rows_in):
-    w.write(r+i, 0, a, f_txt)
-    w.write(r+i, 1, b, f_instar)
-    w.write(r+i, 2, c, f_txt)
-    w.write(r+i, 3, d, f_txt)
-r += len(rows_in) + 1
+    w.write(r+i, 0, a, f_txt); w.write(r+i, 1, b, f_instar)
+    w.write(r+i, 2, c, f_txt); w.write(r+i, 3, d, f_txt)
+r += len(rows_in)
+cdP, ctobs, cAref = A1(R_dPobs), A1(R_tobs), A1(R_Aref)
+R_rateRef = r
+w.write(r, 0, "操油課 差圧上昇速度", f_txt)
+w.write_formula(r, 1, f"={cdP}/{ctobs}", f_out, round(50/60, 3))
+w.write(r, 2, "kPa/日", f_txt); w.write(r, 3, "=ΔP_obs/t_obs", f_txt)
+r += 2
 
 w.write(r, 0, "■ 当方条件（本検討より自動引用）", f_sec); r += 1
-for j, h in enumerate(["項目", "値", "単位", "出典・式"]):
+for j, h in enumerate(["項目", "値/式", "単位", "出典・式"]):
     w.write(r, j, h, f_hdr)
 r += 1
-R_Aus, R_Qus = r, r+1
+R_Aus = r
 w.write(r, 0, "当方 ろ過面積 A_us", f_txt)
 w.write_formula(r, 1, "='②ストレーナ'!B18", f_out, 101.3)
 w.write(r, 2, "cm²", f_txt); w.write(r, 3, "②ストレーナ ろ過面積(円錐式)", f_txt)
 r += 1
-w.write(r, 0, "当方 通液流量 Q_us", f_txt)
-w.write_formula(r, 1, "='②ストレーナ'!B23", f_out, 2.33)
-w.write(r, 2, "m³/h", f_txt); w.write(r, 3, "②ストレーナ 流量(2.587T/H÷ρ)", f_txt)
+R_budget = r
+w.write(r, 0, "当方 許容差圧上昇 ΔP_lim", f_txt)
+w.write_formula(r, 1, "='①NPSH'!B9-'②ストレーナ'!B10", f_out, round(116.9-3.56, 1))
+w.write(r, 2, "kPa", f_txt); w.write(r, 3, "=キャビ限界(①B9) − クリーンΔP(②B10)", f_txt)
 r += 2
+cAus, cBudget, cRateRef = A1(R_Aus), A1(R_budget), A1(R_rateRef)
 
-# 換算ブロック
 w.write(r, 0, "■ ろ過面積比換算による推定清掃周期", f_sec); r += 1
 for j, h in enumerate(["項目", "値/式", "単位", "式・注記"]):
     w.write(r, j, h, f_hdr)
 r += 1
-def xc(rr): return rr  # 0-indexed helper
-# Excelセル参照（1-indexed）
-def A1(rr, col=1): return f"{chr(65+col)}{rr+1}"
-cTref, cAref, cQref = A1(R_Tref), A1(R_Aref), A1(R_Qref)
-cAus,  cQus         = A1(R_Aus),  A1(R_Qus)
-
 R_ratioA = r
-w.write(r, 0, "面積比 (当方/操油課)", f_txt)
-w.write_formula(r, 1, f"={cAus}/{cAref}", f_out, round(101.3/200, 4))
-w.write(r, 2, "-", f_txt); w.write(r, 3, "=A_us/A_ref（大きいほど長持ち）", f_txt)
+w.write(r, 0, "面積比 (操油課/当方)", f_txt)
+w.write_formula(r, 1, f"={cAref}/{cAus}", f_out, round(50/101.3, 4))
+w.write(r, 2, "-", f_txt); w.write(r, 3, "=A_ref/A_us（上昇速度の換算係数）", f_txt)
 r += 1
-R_ratioQ = r
-w.write(r, 0, "流量比補正 (操油課/当方)", f_txt)
-w.write_formula(r, 1, f"={cQref}/{cQus}", f_out, round(5.0/2.33, 4))
-w.write(r, 2, "-", f_txt); w.write(r, 3, "=Q_ref/Q_us（当方が低流量なら長持ち）", f_txt)
+cRatioA = A1(R_ratioA)
+R_rateUs = r
+w.write(r, 0, "当方 差圧上昇速度", f_txt)
+w.write_formula(r, 1, f"={cRateRef}*{cRatioA}", f_out, round((50/60)*(50/101.3), 4))
+w.write(r, 2, "kPa/日", f_txt); w.write(r, 3, "=操油課速度×面積比（面積大→緩やか）", f_txt)
 r += 1
-R_conc = r
-w.write(r, 0, "固形分濃度比補正", f_txt)
-w.write(r, 1, 1.0, f_in)
-w.write(r, 2, "-", f_txt); w.write(r, 3, "★サービス差で不明→同程度と仮置き(要確認)", f_txt)
+cRateUs = A1(R_rateUs)
+R_period = r
+w.write(r, 0, "推定清掃周期", f_txt)
+w.write_formula(r, 1, f"={cBudget}/{cRateUs}", f_outb, round((116.9-3.56)/((50/60)*(50/101.3)), 1))
+w.write(r, 2, "日", f_txt); w.write(r, 3, "=許容差圧上昇 / 当方上昇速度", f_txt)
 r += 1
-cRatioA, cRatioQ, cConc = A1(R_ratioA), A1(R_ratioQ), A1(R_conc)
-R_simple = r
-w.write(r, 0, "推定清掃周期① 面積比のみ", f_txt)
-w.write_formula(r, 1, f"={cTref}*{cRatioA}", f_outb, round(90*101.3/200, 1))
-w.write(r, 2, "日", f_txt); w.write(r, 3, "=T_ref×面積比（最も単純な換算）", f_txt)
-r += 1
-R_full = r
-w.write(r, 0, "推定清掃周期② 流量・濃度補正込", f_txt)
-w.write_formula(r, 1, f"={cTref}*{cRatioA}*{cRatioQ}*{cConc}", f_outb,
-                round(90*(101.3/200)*(5.0/2.33)*1.0, 1))
-w.write(r, 2, "日", f_txt); w.write(r, 3, "=T_ref×面積比×流量比×濃度比（t∝面積/(流量×濃度)）", f_txt)
-r += 1
+cPeriod = A1(R_period)
 R_first = r
-cFull = A1(R_full)
 w.write(r, 0, "初回点検時期(安全側)", f_txt)
-w.write_formula(r, 1, f"={cFull}*0.5", f_outb, round(90*(101.3/200)*(5.0/2.33)*0.5, 1))
+w.write_formula(r, 1, f"={cPeriod}*0.5", f_outb, round((116.9-3.56)/((50/60)*(50/101.3))*0.5, 1))
 w.write(r, 2, "日", f_txt); w.write(r, 3, "初期は推定周期の1/2で点検→実績で延伸", f_txt)
 r += 2
 
-# 感度表：操油課ろ過面積(最大の不確かさ)を振る
-w.write(r, 0, "■ 感度表：操油課ろ過面積A_refを振った当方推定周期（T_ref・補正は上の入力値を使用）", f_sec)
-r += 1
-for j, h in enumerate(["A_ref[cm²]", "面積比", "推定周期②[日]", "注記"]):
-    w.write(r, j, h, f_hdr)
-r += 1
-sens = [50, 100, 200, 300, 500]
-for a_ref in sens:
-    w.write(r, 0, a_ref, f_in)
-    cell_aref = f"A{r+1}"
-    w.write_formula(r, 1, f"={cAus}/{cell_aref}", f_out, round(101.3/a_ref, 3))
-    cell_ratio = f"B{r+1}"
-    w.write_formula(r, 2, f"={cTref}*{cell_ratio}*{cRatioQ}*{cConc}", f_out,
-                    round(90*(101.3/a_ref)*(5.0/2.33)*1.0, 1))
-    w.write(r, 3, "操油課面積が小さいほど当方は長持ち", f_txt)
-    r += 1
-sens_first = r - len(sens)
-sens_last = r - 1
-r += 1
-
 w.merge_range(r, 0, r, 3,
-    "運用：①まず操油課データで推定周期を確定 → ②初期は推定周期の1/2で開放点検し閉塞量を実測 → "
-    "③起動時の閉塞速度とCV開度トレンド(DCS)・現場パトロール(1日1回)で周期を実機補正 → "
-    "④以後は補正済み周期で定期清掃。差圧直読タグが無いため、定量管理はこの清掃周期が主軸。", f_concl)
-w.set_row(r, 56)
-
-# 感度グラフ（A_ref vs 推定周期）
-chart5 = book.add_chart({"type": "column"})
-chart5.add_series({
-    "name": "当方 推定清掃周期",
-    "categories": ["⑤清掃周期", sens_first, 0, sens_last, 0],
-    "values":     ["⑤清掃周期", sens_first, 2, sens_last, 2],
-    "data_labels": {"value": True},
-})
-chart5.set_title({"name": "操油課ろ過面積 vs 当方推定清掃周期（★暫定値）"})
-chart5.set_x_axis({"name": "操油課 ろ過面積 A_ref [cm²]"})
-chart5.set_y_axis({"name": "当方 推定清掃周期 [日]"})
-chart5.set_legend({"none": True})
-w.insert_chart("F4", chart5, {"x_scale": 1.25, "y_scale": 1.25})
+    "運用：①操油課の差圧上昇実績を入力 → ②面積比で当方の上昇速度・推定周期を算出 → "
+    "③初期は推定周期の1/2で開放点検し差圧の立ち方を実測 → ④起動時の差圧上昇とCV開度トレンド"
+    "(DCS)・現場パトロール(1日1回)で周期を実機補正 → ⑤以後は補正済み周期で定期清掃。"
+    "差圧の直読タグが無いため、定量管理はこの清掃周期が主軸。"
+    "（注）固形分濃度・流量が操油課と大きく異なる場合は起動時実測で補正する。", f_concl)
+w.set_row(r, 70)
 
 # ============== 既存グラフ4枚を再現 ==============
 # chart1: ② 閉塞率→差圧
