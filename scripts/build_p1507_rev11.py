@@ -9,8 +9,8 @@ P-1507 技術評価 rev9 を構築する。
 """
 import openpyxl, xlsxwriter
 
-SRC = "outputs/P1507ストレーナ変更_技術評価_rev8.xlsx"
-DST = "outputs/P1507ストレーナ変更_技術評価_rev10.xlsx"
+SRC = "outputs/P1507ストレーナ変更_技術評価_rev10.xlsx"
+DST = "outputs/P1507ストレーナ変更_技術評価_rev11.xlsx"
 
 wbf = openpyxl.load_workbook(SRC, data_only=False)
 wbv = openpyxl.load_workbook(SRC, data_only=True)
@@ -37,17 +37,24 @@ REPLACE = {
 
 def style_to_fmt(book, cell, cache):
     """openpyxl セル書式 → xlsxwriter Format（キャッシュして再利用）"""
-    f = cell.font; fl = cell.fill; al = cell.alignment
+    f = cell.font; fl = cell.fill; al = cell.alignment; bd = cell.border
     d = {}
     if f.bold: d["bold"] = True
     if f.size and f.size != 11: d["font_size"] = f.size
-    col = f.color
-    if col is not None and isinstance(getattr(col, "rgb", None), str) and col.rgb not in ("FF000000",):
-        d["font_color"] = "#" + col.rgb[-6:]
+    # 文字は黒ベース：青/白などのフォント色は捨てる（既定の黒）
     if fl is not None and fl.patternType:
         fg = fl.fgColor
-        if isinstance(getattr(fg, "rgb", None), str):
-            d["bg_color"] = "#" + fg.rgb[-6:]
+        rgb = getattr(fg, "rgb", None)
+        if isinstance(rgb, str):
+            hexv = rgb[-6:].upper()
+            if hexv == "FFF2CC":              # 入力＝黄色は維持
+                d["bg_color"] = "#FFF2CC"; d["border"] = 1
+            elif hexv == "1F4E79":            # 旧・濃紺ヘッダ → 白地・黒太字・罫線
+                d["bold"] = True; d["border"] = 1
+            # それ以外の塗りは白地に
+    # 元の罫線は薄罫線として維持（表のグリッド感）
+    if any(s and s.style for s in (bd.left, bd.right, bd.top, bd.bottom)):
+        d["border"] = 1
     if al.wrap_text: d["text_wrap"] = True
     if al.horizontal: d["align"] = al.horizontal
     if al.vertical: d["valign"] = al.vertical
@@ -93,19 +100,18 @@ ws_cv     = copy_sheet(book, "③CV監視(両弁)", fmt_cache)
 ws_prop   = copy_sheet(book, "④物性(Aspen)", fmt_cache)
 
 # 0_読み方 に ⑤ の行を追記
-title_blue = book.add_format({"font_color": "#1F4E79"})
 ws_read.write(9, 1, "⑤清掃周期")
 ws_read.write(9, 2, "操油課250メッシュの差圧上昇実績→ろ過面積比で当方の清掃周期を換算(★回答待ち)")
 
-# ============== 新シート ⑤清掃周期 ==============
+# ============== 新シート ⑤清掃周期（黒文字・白地・入力のみ黄色） ==============
 F = lambda **k: book.add_format(k)
-f_title  = F(bold=True, font_size=14, font_color="#1F4E79")
+f_title  = F(bold=True, font_size=14)
 f_note   = F(text_wrap=True, valign="top")
-f_hdr    = F(bold=True, bg_color="#1F4E79", font_color="#FFFFFF", text_wrap=True, border=1, align="center")
+f_hdr    = F(bold=True, text_wrap=True, border=1, align="center")   # 白地・黒太字・罫線
 f_sec    = F(bold=True)
-f_in     = F(bg_color="#FFF2CC", border=1)              # 入力(黄)
-f_instar = F(bg_color="#FFF2CC", border=1, font_color="#C00000")  # ★操油課回答待ち
-f_out    = F(border=1)                                  # 計算結果(白)
+f_in     = F(bg_color="#FFF2CC", border=1)             # 入力(黄)
+f_instar = F(bg_color="#FFF2CC", border=1)             # ★も黄色のみ(文字は黒)
+f_out    = F(border=1)                                 # 計算結果(白)
 f_outb   = F(border=1, bold=True)
 f_txt    = F(border=1)
 f_concl  = F(bold=True, text_wrap=True, valign="top")
