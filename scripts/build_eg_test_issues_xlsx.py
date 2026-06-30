@@ -103,20 +103,17 @@ def main():
     ws1 = wb.active
     ws1.title = "課題マスタ"
     h1 = ["No", "大分類", "小分類", "課題・論点", "制約", "対応方針",
-          "期限/マイルストーン", "担当", "RD事前提出", "優先度", "出典・備考"]
+          "期限/マイルストーン", "担当", "RD事前提出", "優先度", "備考"]
     w1 = [4, 8, 14, 30, 26, 30, 16, 12, 9, 7, 22]
     rows1 = []
     for i, m in enumerate(master, start=1):
-        bikou = g(m, "shutten")
-        if g(m, "bikou"):
-            bikou = (bikou + " / " + g(m, "bikou")).strip(" /")
         rows1.append([
             g(m, "no", i), g(m, "bunrui_dai"), g(m, "bunrui_sho"), g(m, "kadai"),
             g(m, "seiyaku"), g(m, "houshin"), g(m, "kigen"), g(m, "tantou"),
-            g(m, "rd_teishutsu", "-"), g(m, "yusen"), bikou,
+            g(m, "rd_teishutsu", "-"), g(m, "yusen"), g(m, "bikou"),
         ])
     write_sheet(ws1, h1, w1, rows1,
-                note="EG品質確認テスト(EG-1/EG-2) 課題整理  2026-06-30 C2定例反映")
+                note="EG品質確認テスト(EG-1/EG-2) 課題整理（2026-06-30時点）")
 
     # ---- 2. RD事前提出依頼 ----
     ws2 = wb.create_sheet("RD事前提出依頼")
