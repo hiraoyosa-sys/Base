@@ -145,7 +145,7 @@ def main():
         rows3.append([i, g(s, "milestone"), g(s, "target"), g(s, "owner"),
                       g(s, "depends"), g(s, "note")])
     write_sheet(ws3, h3, w3, rows3,
-                note="テスト工程とSA工程（課1次SA→部1次SA→課3次SA）のマイルストーン")
+                note="テスト工程とSA工程（課1次SA・部1次SA・課3次SAの順）のマイルストーン")
 
     # ---- 4. 運転課題 ----
     ws4 = wb.create_sheet("運転課題")
