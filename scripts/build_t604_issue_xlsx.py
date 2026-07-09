@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-"""T-604 DEG色相悪化：イシュー特定と課題の分離（たたき台）Excel生成。
+"""T-604 DEG色相悪化：課題ツリーたたき台（課題設定と分離.sop準拠）Excel生成。
 
-シート1＝課題の分離表（縦＝分離軸、横＝仮説・成立条件・既存整理・開放所見・確認データ）。
-シート2＝動かない事実・イシューの構図・情報待ちリスト。
+シート1＝課題ツリー（列は「課題（仮説）／検証方法／対応（検証が当たれば）」。
+検証・対応は手を動かせる葉にだけ書き、上位ノードは空白）。
+シート2＝背骨（事実・見極め・対応）と情報待ち。
 配色はモノクロ（白地・黒文字・細罫線・見出しは薄グレー）＝DEG着色_フロー整理.xlsxと同体裁。
 """
 import os
@@ -14,11 +15,15 @@ OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
 os.makedirs(OUT, exist_ok=True)
 
 DATE = "2026-07-09"
-TITLE = "T-604 DEG色相悪化　イシュー特定と課題の分離（たたき台）"
+TITLE = "T-604 DEG色相悪化　課題ツリー（たたき台・合意待ち草案）"
+
+ISSUE = ("イシュー（草案）：T-604だけAPHAが上がり続けるのは、タンク固有の異常（内面の錆・付着が着色を促進）"
+         "ではなく、むしろ貯めた液の履歴（NaOH停止後に初めて貯め始めた初期液が前駆体を多く含み、"
+         "使い切られるまで鎖伸長が続いている）のせいなのでは。")
 
 HEADER_FILL = "E6E6E6"
 LABEL_FILL = "F2F2F2"
-SUB_FILL = "F7F7F7"
+TOP_FILL = "EFEFEF"
 WHITE = "FFFFFF"
 INK = "000000"
 SUB_INK = "404040"
@@ -41,118 +46,74 @@ def est_lines(text, cpl):
     return n
 
 
-# ===== シート1：課題の分離表 =====
-# 列定義（たたき台。列の意味は木村さんの用途に合わせて要調整）
-COL_DEFS = [
-    ("分離軸\n（T-604と他タンクの\n違いの候補）", 17),
-    ("仮説\n（この違いがあればT-604だけの悪化を説明できる）", 36),
-    ("妥当と言えるための条件\n（何が確認できれば成り立つか）", 36),
-    ("既存整理での位置づけ", 32),
-    ("タンク開放所見との関係", 30),
-    ("確認に必要なデータ・分析", 32),
+# (番号, 課題（仮説）, 検証方法, 対応（検証が当たれば）, 階層0/1/2)
+TREE = [
+    ("A", "T-604だけAPHAが上がり続けるのは、貯めた液の履歴のせいなのでは（タンク固有の異常ではなく）", "", "", 0),
+    ("A-1", "初期在庫（NaOH停止後からリン酸開始前）は前駆体を最も多く含む液だったのでは", "", "", 1),
+    ("A-1-①", "貯め始めの時期は悪化品期（3月末から4/20頃）に重なるはず",
+     "受払履歴で貯め始め日・受入元を確認",
+     "前駆体を含む液が残る間は仕分け・ブレンド前提の出荷運用", 2),
+    ("A-1-②", "T-604残液はT-615残液より前駆体が多いはず",
+     "残液のUVチャート・GPCを両タンクで比較",
+     "残液の処理（抜き出し・希釈）を検討", 2),
+    ("A-2", "リン酸添加品を後から入れてもAPHAが上がり続けたのは、タンク内で鎖伸長が続いているためなのでは", "", "", 1),
+    ("A-2-①", "上昇は前駆体が使い切られるまで続き、その後APHA30前後で頭打ちになるはず",
+     "T-604のAPHA・UV450推移が飽和型か（T-555の5/18以降安定と同型か）を確認",
+     "頭打ちが確認できれば、在庫の作り直しでなく時間経過とブレンドで収束を待つ選択肢が立つ", 2),
+    ("A-2-②", "リン酸は上流の前駆体生成に効き、タンク内の反応には効かないのでは",
+     "T-615（低下）との上昇速度比較で切り分け",
+     "リン酸投入判断を「タンクを治す」でなく「前駆体を入れない」目的に整理し直す", 2),
+    ("A-3", "（反証側）同じ液を入れてもT-604だけ上がるなら、タンク固有差なのでは",
+     "同等液の入槽先別UV450比較。ボンベサンプリング（プラント由来かタンク由来かの切り分け）",
+     "タンク固有差ならB系（設備側）を色相対策に昇格", 1),
+    ("B", "開放で内面の状態が良くないのは、着色の原因ではなくむしろ結果（初期液の有機酸による腐食）なのでは", "", "", 0),
+    ("B-1", "NaOH停止で有機酸（ギ酸）の中和がなくなり、初期液が内面を腐食させたのでは",
+     "残液の有機酸・pH実測。腐食部位の分布（液相部か気相部か）の確認",
+     "腐食は液側の運用改善（前駆体・有機酸を入れない）で再発防止", 1),
+    ("B-2", "（反証側）付着物が450nm成長の触媒・供給源として働いているのでは",
+     "付着物の元素分析（Fe・P・Na）とDEG共存保管試験で450nm再現の有無（T-555異物「ほぼ鉄」と比較）",
+     "再現すればタンク清掃・内面処理を色相対策に昇格", 1),
+    ("B-3", "腐食の程度が使用継続に耐えるかは、色相と切り離した設備健全性の判断のはず",
+     "肉厚測定・開放検査結果の整理",
+     "補修・使用可否の判断（色相の結論を待たずに進める）", 1),
 ]
 
-ROWS = [
-    (
-        "液の中身\n（受入・ブレンド）",
-        "悪化品（ポリエナール前駆体を含むDEG）の受入がT-604に集中し、前駆体濃度が最も高い液がここで長期滞留した。T-555・T-615にはブレンド・希釈後の液が回るため悪化が目立たない。",
-        "受払履歴で、悪化期間の初期流動品・悪化品の入槽先がT-604に偏っていたこと。T-555・T-615への移送がブレンド後だったこと。",
-        "既存メカニズム（450nm成長の場はタンク長滞留・前駆体が反応しきるとAPHA30前後で安定）と最も整合。初期タンク運用「T-604で受け、T-555・T-615へ展開しブレンドで調整」とも符合。",
-        "前駆体・重質物が最も多く通過・滞留したタンクなら、内面の付着・変色が最も強く出ることも同時に説明できる（付着は悪化の結果、という向きと同じ）。",
-        "タンク受払履歴（悪化期の受入元・量・ブレンド比率）。残液・付着物のUVチャートとGPC（T-555残液との比較）。",
-    ),
-    (
-        "塩基性\n（Na・pH）",
-        "T-604内のNa濃度・pHが他タンクより高く、「A-ALDとNaの併存」の悪化条件がタンク内でも成立している。",
-        "T-604残液のNa・pHがT-555・T-615より有意に高いこと。Na投入管理履歴と品質の相関で、Na添加期の液がT-604に偏って入っていたこと。",
-        "主因の現行整理（A-ALD濃度上昇とNa存在の組み合わせ・7/1ほぼ合意）と直結。「Na停止でストリームは改善する一方、特定タンク(604)で濃度上昇事例あり」という既往記録とも符合。",
-        "塩基性そのものは内面の腐食・汚れを直接は説明しない（腐食は有機酸側の論点として分離）。",
-        "残液のpH・Na実測。Na投入・リン酸Na転換の時期とT-604受入時期の重なり。2008年比較はNa無添加期のため単純比較に限界がある点に留意。",
-    ),
-    (
-        "滞留時間\n・残液運用",
-        "T-604は回転が遅く残液が長く残る運用のため、鎖伸長（脱水縮合）の時間が他タンクより長い。",
-        "受払データから各タンクの平均滞留日数・残液量を出し、T-604が突出していること。",
-        "「450nm成長の場はタンク（長滞留）」と整合。本管DEGは27日でAPHA5以下・タンク品で450nmが成長する、という事実とも同じ向き。",
-        "長滞留であればスラッジ・付着の蓄積も説明しやすい。",
-        "タンク別の滞留日数・残液量の試算（受払履歴から）。",
-    ),
-    (
-        "タンク内面の状態\n（腐食・付着物）",
-        "T-604内面の錆・付着物が着色の原因側（触媒または供給源）として働いている。",
-        "T-604付着物に、450nm成長へ直接つながる触媒作用または特異成分が確認されること。既往試験（鉄錆単独では着色しない・C-1503付着物はピーク380nmで実機450nmと別現象・黒色付着物混入でも450nmピーク再現せず）を覆す結果が必要。",
-        "既存整理では否定側が優勢（鉄サビは450nmの主因でない・サビは原因でなく結果の可能性＝前田）。ただし局所腐食・380nm寄与までは無罪と言い切っていない＝未確定を残す。",
-        "開放所見「状態が良くない」（詳細は情報待ち）を直接説明する仮説。ただし逆向きの説明（アルデヒド高濃度で生成した有機酸（ギ酸）がタンクを腐食させた＝悪化の結果）も既に立っており、原因か結果かの向き決めが本丸の論点。",
-        "付着物の元素・有機分析（Fe・P・Na・有機成分。T-555異物「ほぼ鉄」との比較）。付着物のDEG共存保管試験（450nm再現の有無）。肉厚測定と腐食部位の分布（液面部・底部・気相部のどこか）。",
-    ),
-    (
-        "雰囲気\n（窒素シール・酸素）",
-        "T-604は酸素が特に入らず、悪化を止める側に働く酸素の効果が効いていない。または逆に微量のエアリークがあり、活性金属の生成に働いている（木村コメント＝活性金属の発生に微量酸素が必要）。",
-        "タンク別の窒素シール・呼吸・エアリークの実態に、T-604だけの差があること。",
-        "酸素雰囲気で悪化が止まる事実はあるが、T-555も窒素シールで残液はAPHA30で安定しており、雰囲気の差だけでは説明力が弱い。窒素抑制の機序自体が3説併存（ラジカル停止・CO2溶解pH低下・吸湿水分）で未確定。",
-        "エアリークや結露があれば、気相部の内面腐食と符合する。",
-        "シール窒素の設定・パージ量・酸素濃度の実測。腐食部位の分布との突き合わせ。",
-    ),
-    (
-        "水分・温度",
-        "T-604の液水分が特に低く鎖伸長が進みやすい。または温度が高く反応が速い。",
-        "タンク別の水分・温度実績に有意差があること。",
-        "水分の寄与度は感度2〜3割で未確定。温度はDEG色相への検証が弱いとして優先度を下げた経緯（木村判断・6/3）。",
-        "直接は説明しない。",
-        "タンク別の水分・温度データの比較（あれば）。",
-    ),
-    (
-        "見え方\n（監視・運用の偏り）",
-        "タンク固有の差ではなく、悪化品の投入とUV450監視がT-604に集中しているため「T-604だけ悪化」に見えている。",
-        "同等の悪化品をT-555・T-615に入れた場合に同程度の速度（1日あたり0.004程度）でUV450が上昇すれば、タンク固有差は否定される。",
-        "T-604はUV450早期判定の実績タンク（4/13からのデータで悪化品投入時1日あたり約0.004上昇・正常品はベース0.002から動かない）＝監視が最も密なタンクであることは事実。",
-        "開放所見は説明しない（設備側の課題として分離）。",
-        "入槽先別のUV450推移の比較。製品ストリームのボンベサンプリング（色相悪化がプラント由来かタンク由来かの切り分け・向後提案）。",
-    ),
-]
-
-# ===== シート2：イシューの構図・動かない事実・情報待ち =====
-ISSUES = [
-    ("イシュー1\n（液の課題）",
-     "T-604だけDEG色相悪化が進むのはなぜか。主仮説は「何が入ったか（前駆体）」「何と一緒か（Na）」「どれだけ置いたか（滞留）」の組み合わせ＝タンクの個体差ではなく運用の差で説明する筋が、既存整理と最も整合する。"),
-    ("イシュー2\n（設備の課題）",
-     "T-604開放で内面の状態が良くないのはなぜか・健全性をどう回復するか。既存整理では「腐食・付着は悪化の結果（アルデヒド高濃度で生成した有機酸による腐食）」の可能性が高い側。色相の原因究明とは切り離し、設備健全性（肉厚・補修）として進める。"),
-    ("両者の接続点",
-     "付着物分析だけが両イシューをつなぐ（付着・錆が色相悪化の原因か、悪化の結果かの向き決め）。ここを最初に確定させると課題が完全に分離できる。"),
-]
-
-FACTS = [
-    ("1", "着色物質は共役ポリエナール類（基礎研GPCで実測・MW200〜800）。主因はA-ALD由来（F-ALD・G-ALDも一部寄与）。"),
-    ("2", "450nm成長の場はタンク（長滞留）。前駆体が反応しきるとAPHA30前後で安定（T-555・T-604残液と整合）。"),
-    ("3", "酸素雰囲気（船・ローリー）では悪化が止まる。鉄錆単独では着色しない（保管試験の実測）。"),
-    ("4", "運用で色相に効いたのはリン酸Na（Na3PO4）のみ。継続投入が前提（止めると戻る）。"),
-    ("5", "主要因は「A-ALD濃度上昇」と「Naの存在」の組み合わせでほぼ合意（7/1）。2008年にアセト高でも問題が出なかったのはNa無添加のため。"),
-    ("6", "T-604のUV450実績＝悪化品投入時は1日あたり約0.004上昇・正常品はベース0.002から動かない（4/13以降）。"),
-    ("7", "T-555（6/16初回開放）は黒色異物少なく比較的綺麗・異物はほぼ鉄。T-615（6/17）もT-555と同程度。T-555残液は5/18以降APHA上昇なし。"),
-    ("8", "今回のT-604開放では内面の状態が良くない（所見の詳細は情報収集中）。"),
+# 背骨（事実・見極め・対応）
+BACKBONE = [
+    ("事実", "T-604はNaOH停止後に初めて貯め始めたタンク（それまで在庫なし）。"),
+    ("事実", "リン酸添加品を貯めてもT-604はAPHA上昇が継続。T-615はリン酸添加後に低下傾向＝この実測差が最大の特徴。"),
+    ("事実", "T-604開放で内面の状態が良くない（所見の詳細は情報収集中）。T-555（6/16初回開放）は比較的綺麗・異物はほぼ鉄。T-615（6/17）もT-555と同程度。"),
+    ("事実", "既存整理＝前駆体はタンク長滞留で鎖伸長し、使い切られるとAPHA30前後で安定（T-555残液実測）。鉄錆単独では着色しない（保管試験）。主要因はA-ALD濃度上昇とNa存在の組み合わせ（7/1ほぼ合意）。"),
+    ("見極め", "①T-604とT-615の残液で前駆体（UVチャート・GPC）に差があるか（A-1-②）。"),
+    ("見極め", "②付着物が450nm成長の触媒になるか＝錆・付着が原因か結果かの向き決め（B-2）。"),
+    ("見極め", "③T-604のAPHA上昇が飽和型か上がり続けているか（A-2-①）。"),
+    ("対応", "液の履歴が当たりなら運用側（前駆体を含む液の受入管理・仕分け・ブレンド・残液処理）。反証が当たりなら設備側（清掃・補修・使用可否）。どちらに転んでも次の打ち手が決まる。"),
 ]
 
 PENDING = [
     "T-604開放所見の詳細（部位・色・付着量・腐食の程度・写真）",
-    "タンク受払履歴（悪化期の受入元・ブレンド比率・滞留日数）",
-    "残液・付着物の分析結果（UVチャート・pH・Na・Fe・P）",
-    "窒素シール・酸素濃度の実態（タンク別）",
+    "タンク受払履歴（貯め始め日・受入元・悪化品期との重なり・ブレンド比率）",
+    "残液・付着物の分析結果（UVチャート・GPC・pH・Na・Fe・P・有機酸）",
+    "T-604とT-615のAPHA・UV450推移の並記データ（リン酸添加品受入の前後）",
 ]
 
-NOTE = ("本表はたたき台。列の意味（特に「確認に必要なデータ・分析」が何に向けた確認か）と行の粒度は、"
-        "木村さんの用途に合わせて調整する。具体データが入り次第、各行の「妥当と言えるための条件」を満たすか順に潰していく。")
+AGREE = [
+    "イシュー1文の向き（「タンク固有ではなく液の履歴」という対置）でよいか",
+    "「検証方法」列を何に向けた検証として書くか（原因究明用か、会議説明用か）",
+    "A-2-①「頭打ちになるはず」は足元のT-604推移次第で書き方を変える（上がり続けているなら弱い主張）",
+]
 
 
 wb = Workbook()
 ws = wb.active
-ws.title = "課題の分離"
+ws.title = "課題ツリー"
 ws.sheet_view.showGridLines = False
 
-NCOL = len(COL_DEFS)
-for i, (_, w) in enumerate(COL_DEFS):
+COLS = [("番号", 9), ("課題（仮説）", 52), ("検証方法", 36), ("対応（検証が当たれば）", 36)]
+for i, (_, w) in enumerate(COLS):
     ws.column_dimensions[get_column_letter(1 + i)].width = w
-last_letter = get_column_letter(NCOL)
-CPLS = [int(w / 2.05) for _, w in COL_DEFS]
+last_letter = get_column_letter(len(COLS))
+CPLS = [int(w / 2.05) for _, w in COLS]
 
 r = 1
 ws.merge_cells(f"A{r}:{last_letter}{r}")
@@ -162,49 +123,47 @@ c.alignment = Alignment(horizontal="left", vertical="center")
 ws.row_dimensions[r].height = 26
 r += 1
 ws.merge_cells(f"A{r}:{last_letter}{r}")
+c = ws.cell(r, 1, ISSUE)
+c.font = Font(name=FONT, size=10, bold=True, color=INK)
+c.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+ws.row_dimensions[r].height = est_lines(ISSUE, sum(CPLS)) * 15 + 12
+r += 1
+ws.merge_cells(f"A{r}:{last_letter}{r}")
 c = ws.cell(r, 1, f"（{DATE} 時点・たたき台）")
 c.font = Font(name=FONT, size=9, color=SUB_INK)
 c.alignment = Alignment(horizontal="right", vertical="center")
-for cidx in range(1, NCOL + 1):
+for cidx in range(1, len(COLS) + 1):
     ws.cell(r, cidx).border = Border(bottom=med)
 ws.row_dimensions[r].height = 14
 r += 1
 
 HEADER_ROW = r
-for i, (name, _) in enumerate(COL_DEFS):
+for i, (name, _) in enumerate(COLS):
     cell = ws.cell(r, 1 + i, name)
-    cell.font = Font(name=FONT, size=9.5, bold=True, color=INK)
+    cell.font = Font(name=FONT, size=10, bold=True, color=INK)
     cell.fill = fill(HEADER_FILL)
     cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
     cell.border = Border(left=thin, right=thin, top=thin, bottom=med)
-ws.row_dimensions[r].height = 44
+ws.row_dimensions[r].height = 22
 r += 1
 
-for row in ROWS:
+for num, hypo, verify, action, level in TREE:
+    indent = level
+    row_fill = TOP_FILL if level == 0 else WHITE
+    bold = level == 0
+    vals = [num, hypo, verify, action]
     maxlines = 1
-    for i, txt in enumerate(row):
+    for i, txt in enumerate(vals):
         cell = ws.cell(r, 1 + i, txt)
-        if i == 0:
-            cell.font = Font(name=FONT, size=9, bold=True, color=INK)
-            cell.fill = fill(LABEL_FILL)
-            cell.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True, indent=1)
-        else:
-            cell.font = Font(name=FONT, size=8.5, color=INK if i in (1, 2) else SUB_INK)
-            cell.fill = fill(WHITE)
-            cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True, indent=1)
+        cell.font = Font(name=FONT, size=9, bold=bold if i <= 1 else False,
+                         color=INK if i <= 1 else SUB_INK)
+        cell.fill = fill(LABEL_FILL if i == 0 else row_fill)
+        cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True,
+                                   indent=(indent + 1 if i == 1 else 1))
         cell.border = border
-        maxlines = max(maxlines, est_lines(txt, CPLS[i]))
+        maxlines = max(maxlines, est_lines(txt, max(CPLS[i] - (indent if i == 1 else 0), 8)))
     ws.row_dimensions[r].height = maxlines * 12.5 + 7
     r += 1
-
-r += 1
-ws.merge_cells(f"A{r}:{last_letter}{r}")
-c = ws.cell(r, 1, NOTE)
-c.font = Font(name=FONT, size=9, color=SUB_INK)
-c.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True, indent=1)
-for cidx in range(1, NCOL + 1):
-    ws.cell(r, cidx).border = border
-ws.row_dimensions[r].height = est_lines(NOTE, sum(CPLS)) * 15 + 10
 
 ws.print_title_rows = f"{HEADER_ROW}:{HEADER_ROW}"
 ws.page_setup.orientation = "landscape"
@@ -213,12 +172,12 @@ ws.page_setup.fitToHeight = 0
 ws.sheet_properties.pageSetUpPr.fitToPage = True
 ws.page_margins.left = ws.page_margins.right = 0.3
 ws.page_margins.top = ws.page_margins.bottom = 0.4
-ws.freeze_panes = "B" + str(HEADER_ROW + 1)
+ws.freeze_panes = "A" + str(HEADER_ROW + 1)
 
 
-ws2 = wb.create_sheet("事実と情報待ち")
+ws2 = wb.create_sheet("背骨と情報待ち")
 ws2.sheet_view.showGridLines = False
-ws2.column_dimensions["A"].width = 16
+ws2.column_dimensions["A"].width = 12
 ws2.column_dimensions["B"].width = 104
 
 
@@ -249,16 +208,16 @@ def s2_kv(r, k, v):
 
 
 r = 1
-r = s2_band(r, "イシューの構図（2つに分離する）")
-for k, v in ISSUES:
+r = s2_band(r, "背骨（事実・見極め・対応）")
+for k, v in BACKBONE:
     r = s2_kv(r, k, v)
 r += 1
-r = s2_band(r, "動かない事実（前提）")
-for k, v in FACTS:
-    r = s2_kv(r, k, v)
-r += 1
-r = s2_band(r, "情報待ち（入り次第この表に反映）")
+r = s2_band(r, "情報待ち（入り次第ツリーに反映）")
 for i, v in enumerate(PENDING, 1):
+    r = s2_kv(r, str(i), v)
+r += 1
+r = s2_band(r, "合意待ちの点（この草案で確認すること）")
+for i, v in enumerate(AGREE, 1):
     r = s2_kv(r, str(i), v)
 
 ws2.page_setup.orientation = "landscape"
