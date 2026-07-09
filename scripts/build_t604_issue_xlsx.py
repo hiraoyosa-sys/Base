@@ -15,7 +15,7 @@ OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
 os.makedirs(OUT, exist_ok=True)
 
 DATE = "2026-07-09"
-TITLE = "T-604 DEG色相悪化　課題ツリー（たたき台・合意待ち草案）"
+TITLE = "T-604 DEG色相悪化　課題ツリー（たたき台）"
 
 ISSUE = ("イシュー（草案）：色相悪化は全タンクで起きているが、T-604がNaOH停止後の液・リン酸添加品を受けても"
          "APHA5未満から30まで上がり続けた（T-615は低下傾向）のは、液の質だけでは説明できず、"
@@ -109,7 +109,6 @@ PENDING = [
 ]
 
 AGREE = [
-    "イシューを「全タンク悪化の中でのT-604の速度差＝タンク固有条件の重ね合わせ」と設定し直した向きでよいか",
     "4/1調査資料（DEGタンク調査_20260401.pptx）の「エポキシ」記載の訂正を資料所管へ連絡するか",
     "「検証方法」列を何に向けた検証として書くか（原因究明用か、会議説明用か）",
 ]
@@ -227,7 +226,7 @@ r = s2_band(r, "情報待ち（入り次第ツリーに反映）")
 for i, v in enumerate(PENDING, 1):
     r = s2_kv(r, str(i), v)
 r += 1
-r = s2_band(r, "合意待ちの点（この草案で確認すること）")
+r = s2_band(r, "残る確認点")
 for i, v in enumerate(AGREE, 1):
     r = s2_kv(r, str(i), v)
 
