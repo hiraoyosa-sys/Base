@@ -121,10 +121,11 @@ rows = [
     ('位置づけ', '簡易評価用（オーダー確認・感度検討）。正式なリスク評価はHAZchart解析基準（C-2-3）に'
                  '基づきPHA_Organizerで実施する。本ブックの結果はその代替にはならない。'),
     ('計算方式', '掛け算・足し算の体系はPHA_Organizerのカットセット計算（事象の組合せごとに積、組合せ間は和）と同じ。'
-                 '違いが出るのは「経路の網羅」だけで、1本の経路ならPHA_Organizerと同じ数字になる。'
-                 '分岐が多いシナリオは、経路ごとに計算して合計する（例題シート参照）。'),
-    ('シート構成', '「計算原理」…計算の仕組みとAND/ORの使い分け。 「確率DB」…既存テンプレートの故障率・デマンド確率の一覧。'
-                   ' 「シナリオ計算」…シナリオを組んで頻度を計算するシミュレーター。'
+                 'AND/ORのゲートはFTのノードごとに決まる。どんな入れ子構造でもカットセットに展開すれば計算できる'
+                 '（FT計算_カットセットシート）。チェーン型（シナリオ計算シート）はその定型例のショートカット。'),
+    ('シート構成', '「計算原理」…計算の仕組みとAND/ORの決まり方。 「確率DB」…既存テンプレートの故障率・デマンド確率の一覧。'
+                   ' 「シナリオ計算」…チェーン型シナリオの簡易シミュレーター。'
+                   ' 「FT計算_カットセット」…任意のAND/OR構造を扱える一般形（PHA_Organizerと同じ計算）。'
                    ' 「例題_V1204」…アップロードされたプロジェクトの再現例と検算。 「リスクマトリックス」…判定のしきい値（入力して確定させる）。'),
     ('使い方(1)', '「シナリオ計算」で起因事象の構成要素をドロップダウンから選ぶ。この中はOR（どれか1つ壊れれば起因事象）なのでλは足し算。'),
     ('使い方(2)', '防護層を上から通過する順に並べ、各層の構成要素とゲートを選ぶ。'
@@ -182,8 +183,18 @@ for label, text in [
     style(ws, f'D{r}', text, F_BASE, border=True, wrap=True)
 
 r += 2
-style(ws, f'B{r}', '3. ゲートは2つだけ（ANDとORの使い分け）', F_SECTION, fill=FILL_SEC)
+style(ws, f'B{r}', '3. ゲート（AND/OR）はFTのノードごとに決まる', F_SECTION, fill=FILL_SEC)
 gate_rows = [
+    ('大原則',
+     'ゲートは一括で決められない。FT（フォールトツリー）の1つ1つのノード（事象）ごとに、'
+     '下位事象との関係がANDかORかが決まる。HAZchartからFTに変換するときの型: '
+     '「プロセス状態の進行 AND 防護の失敗」がANDで縦につながり、'
+     '各失敗の原因（機器・DCS・人など）がORで横に並ぶ。冗長化した機器はORの中にANDの塊として入る。'),
+    ('どんな構造でも計算できる形',
+     'ゲートがどう入れ子になっていても、FTは「カットセット＝同時に成立すると最終事象になる基本事象の組合せ」の一覧に展開できる。'
+     '組合せの中はAND（積）、組合せの間はOR（和）。これがPHA_Organizerの計算そのもの。'
+     '本ブックではFT計算_カットセットシートがこの一般形。シナリオ計算シート（チェーン型）は'
+     '「AND鎖×OR束」の定型に収まる場合のショートカットで、収まらない構造（ORの下に冗長ANDがある等）はカットセットで組む。'),
     ('ORゲート ＝ 足し算',
      '「どれか1つでも起これば上の事象になる」関係。例: 起因事象の中身（検出器の故障でも、DCSの故障でも、弁の故障でも開度異常になる）、'
      '防護層の中身（検出器が壊れていても、アラームに気づかなくても、対処に失敗しても、その層は破られる）。'
@@ -356,7 +367,8 @@ style(ws, 'C14', '=C13*$C$5', F_BOLD, border=True, fmt=SCI)
 # STEP2
 style(ws, 'B16', 'STEP2 安全防護層――層と層の間はAND（全部失敗して初めて最終事象）＝掛け算',
       F_SECTION, fill=FILL_SEC)
-style(ws, 'B17', '層の中はゲートで選ぶ。OR（既定）＝どれか1つの失敗で層が破られる（和）。AND＝全部失敗で破られる（冗長系。積）。'
+style(ws, 'B17', 'このシートは「AND鎖×OR束」の定型（チェーン型）に収まるシナリオ専用の簡易版。ゲート列は層内が全OR/全ANDのときだけ使える。'
+      'ゲートが混在・入れ子になる構造はFT計算_カットセットシートで組むこと。'
       '手入力PFDに値を入れるとそちらを優先。「有効」を0にするとその層なし（未設置）として計算。', F_NOTE)
 hdr2 = ['層', '層の名称', '構成要素1', '構成要素2', '構成要素3', '構成要素4', '構成要素5', '構成要素6',
         'PFD1', 'PFD2', 'PFD3', 'PFD4', 'PFD5', 'PFD6', 'ゲート', '層PFD(自動)', '手入力PFD', '有効',
@@ -448,6 +460,104 @@ dv_basis = DataValidation(type='list', formula1='"/hr,/年"', allow_blank=True, 
 ws.add_data_validation(dv_basis)
 dv_basis.add(f'C{R0+3}')
 ws.freeze_panes = 'A4'
+
+# ============================================================ 4b. FT計算_カットセット
+ws = wb.create_sheet('FT計算_カットセット')
+widths(ws, {'A': 5, 'B': 26, 'C': 12, 'D': 24, 'E': 24, 'F': 24, 'G': 24, 'H': 24,
+            'I': 11, 'J': 11, 'K': 11, 'L': 11, 'M': 11, 'N': 14, 'O': 44})
+style(ws, 'A1', 'FT計算（カットセット方式）――任意のAND/OR構造を扱える一般形', F_TITLE)
+style(ws, 'A2', 'ゲートがノードごとにどう入れ子になっていても、FTは「カットセット＝同時に成立すると最終事象になる基本事象の組合せ」'
+      'の一覧に展開できる。行の中はAND（積）、行と行の間はOR（和）。これがPHA_Organizerの計算そのもの。', F_NOTE)
+
+style(ws, 'B4', 'カットセットの作り方（ブール簡約のルール）', F_SECTION, fill=FILL_SEC)
+rules = [
+    '1. FTを上からたどり、ANDなら「その行の組合せに追加」、ORなら「行を分ける」。最終事象に至る組合せを全部書き出す。',
+    '2. 同じ事象が1つの行に2回出たら1回にする（A×A＝A）。',
+    '3. ある行が別の行を丸ごと含んでいたら、長い方の行を消す（A＋A×B＝A）。',
+    '4. 同じ事象が複数の行に出るのは正しい（コモン事象。この方式なら二重掛けの過小評価が起きない）。',
+    '5. 各行は「起因事象（λ、/hr）1つ＋デマンド事象（PFD）」の形になる。行の確率(/hr)＝λ×PFDの積。',
+]
+r = 5
+for t in rules:
+    style(ws, f'C{r}', t, F_BASE, wrap=True)
+    r += 1
+
+r += 1
+style(ws, f'B{r}', '例題（V-1204）のFT構造――ゲートはノードごとにこう決まっている', F_SECTION, fill=FILL_SEC)
+r += 1
+tree = [
+    '1. 最終事象「EO反応器まで水巻き上げ触媒失活」 ＝ AND（2 と 5）',
+    '2. さらにレベルがあがる ＝ AND（3 と 4）',
+    '3. V-1204レベル上昇（起因: FC12開度過少） ＝ OR（流量計故障、DCS故障、空気調整弁故障）',
+    '4. LK＋運転員の回復失敗 ＝ OR（液面計故障、DCS故障、アラーム故障、アラームに気づかない、対処失敗(10分)）',
+    '5. OSS不作動 ＝ OR（圧力計故障、リレー回路故障、空気調整弁故障）',
+]
+for t in tree:
+    style(ws, f'C{r}', t, F_BASE)
+    r += 1
+style(ws, f'C{r}', 'ANDの入れ子（1と2）は掛ける順番が変わるだけ（結合則）。ORの中身が行の分岐になる。'
+      'この構造を展開すると 3×5×3＝45行のカットセットになる（下の表）。', F_NOTE, wrap=True)
+ws.row_dimensions[r].height = 28
+r += 2
+
+style(ws, f'B{r}', 'カットセット表（下の45行は例題の展開＝そのまま計算に使われている。黄色の行に自分のシナリオを追記）',
+      F_SECTION, fill=FILL_SEC)
+r += 1
+hdr3 = ['No', '起因事象（λ）', 'λ(/hr)', 'デマンド事象1', 'デマンド事象2', 'デマンド事象3', 'デマンド事象4',
+        'デマンド事象5', 'PFD1', 'PFD2', 'PFD3', 'PFD4', 'PFD5', '行の確率(/hr)', 'メモ']
+for i, h in enumerate(hdr3, start=1):
+    style(ws, f'{get_column_letter(i)}{r}', h, F_BOLD, fill=FILL_HDR, border=True, wrap=True, align='center')
+CS_TOP = r + 1
+initiators = ['流量計／故障', 'DCS／故障', '空気調整弁／故障']
+l1 = ['液面計／故障', 'DCS／故障', 'アラーム／故障', 'ヒューマンエラー／アラームに気づかない',
+      'ヒューマンエラー／発見したが対処できない（時間余裕10分）']
+l2 = ['圧力計／故障', 'リレー回路／故障', '空気調整弁／故障']
+combos = [(a, b, c) for a in initiators for b in l1 for c in l2]
+N_USER = 10
+for i in range(len(combos) + N_USER):
+    rr = CS_TOP + i
+    is_user = i >= len(combos)
+    init_k, d1, d2 = ('', '', '') if is_user else combos[i]
+    f_in = F_INPUT if is_user else F_BASE
+    fill_in = FILL_IN if is_user else None
+    style(ws, f'A{rr}', i + 1, F_BASE, border=True, align='center')
+    style(ws, f'B{rr}', init_k, f_in, fill=fill_in, border=True, wrap=True)
+    style(ws, f'C{rr}', f'=IF(B{rr}="",0,IFERROR(INDEX({LAM_RNG},MATCH(B{rr},{KEY_RNG},0)),0))',
+          F_BASE, border=True, fmt=SCI)
+    for j, dval in enumerate([d1, d2, '', '', '']):
+        col = get_column_letter(4 + j)          # D..H
+        style(ws, f'{col}{rr}', dval, f_in, fill=fill_in, border=True, wrap=True)
+        pcol = get_column_letter(9 + j)         # I..M
+        style(ws, f'{pcol}{rr}', f'=IF({col}{rr}="",1,IFERROR(INDEX({PFD_RNG},MATCH({col}{rr},{KEY_RNG},0)),0))',
+              F_BASE, border=True, fmt=SCI)
+    style(ws, f'N{rr}', f'=C{rr}*I{rr}*J{rr}*K{rr}*L{rr}*M{rr}', F_BASE, border=True, fmt=SCI)
+    style(ws, f'O{rr}', '例題の展開' if not is_user else '', F_NOTE if not is_user else f_in,
+          fill=fill_in, border=True)
+CS_LAST = CS_TOP + len(combos) + N_USER - 1
+r = CS_LAST + 2
+style(ws, f'B{r}', '合計（/hr）＝OR＝和', F_BOLD, border=True)
+style(ws, f'C{r}', f'=SUM(N{CS_TOP}:N{CS_LAST})', F_BOLD, border=True, fmt=SCI)
+CS_TOTAL = f'C{r}'
+r += 1
+style(ws, f'B{r}', '合計（/年）', F_BASE, border=True)
+style(ws, f'C{r}', f"={CS_TOTAL}*'シナリオ計算'!$C$5", F_BASE, border=True, fmt=SCI)
+r += 1
+style(ws, f'B{r}', 'シナリオ計算シートの結果（/hr）との比', F_BASE, border=True)
+style(ws, f'C{r}', f"={CS_TOTAL}/'シナリオ計算'!C{R0+2}", F_BASE, border=True, fmt='0.000')
+style(ws, f'D{r}', '1.000＝チェーン型（和の積）とカットセット（積の和）が同じ計算であることの確認。', F_NOTE, wrap=True)
+r += 2
+style(ws, f'C{r}', '（注1）この例ではDCSが起因と防護の両方に出る行があり、簡約ルール2・3の対象になるが、'
+      'DCSのλが5.3E-10/hrと極小のため合計への影響は1E-11未満。学習用にそのまま展開している。', F_NOTE, wrap=True)
+ws.row_dimensions[r].height = 28
+r += 1
+style(ws, f'C{r}', '（注2）PHA_Organizer保存値（5.25E-6/hr）との差約3割は、PDK・TK経由の分岐経路のカットセットが'
+      'この表に入っていないぶん。経路を行として追加していけば埋まる。', F_NOTE, wrap=True)
+ws.row_dimensions[r].height = 28
+dv_cs = DataValidation(type='list', formula1='=DB_KEYS', allow_blank=True, showErrorMessage=False)
+ws.add_data_validation(dv_cs)
+dv_cs.add(f'B{CS_TOP}:B{CS_LAST}')
+dv_cs.add(f'D{CS_TOP}:H{CS_LAST}')
+ws.freeze_panes = f'A{CS_TOP}'
 
 # ============================================================ 5. 例題_V1204
 ws = wb.create_sheet('例題_V1204')
@@ -543,8 +653,8 @@ style(ws, f'C{r}', 'PHA_OrganizerはHAZchart全体をFTに変換し、最終事�
       '（基本事象の組合せ）に展開して、組合せごとに確率の積を取り、それを合計する。'
       '本シートは主経路1本だけを計算しているため約3割小さく出る。'
       '経路が1本だけのシナリオなら、本シートとPHA_Organizerは同じ数字になる。'
-      '分岐が多いシナリオを正確にやりたいときは、経路ごとに本シートの形で計算して合計すればよい'
-      '（それがカットセットの積和そのもの）。', F_BASE, wrap=True)
+      '分岐が多いシナリオを正確にやりたいときは、経路をカットセットとして書き出して合計すればよい。'
+      'やり方と例題の実演はFT計算_カットセットシート。', F_BASE, wrap=True)
 ws.row_dimensions[r].height = 90
 
 r += 2
