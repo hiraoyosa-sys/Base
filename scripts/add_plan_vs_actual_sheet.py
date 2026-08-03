@@ -12,6 +12,9 @@ df, su, ev, smry, hourly = pickle.load(open(sys.argv[1], 'rb'))
 L, Q = df['FC1402'], df['FQY1530']
 on = (L > 0.5) & (Q > 0.5)
 wb = load_workbook(sys.argv[2])
+for nm in list(wb.sheetnames):
+    if nm.startswith('計画と実績_重ね書き'):
+        del wb[nm]
 ws = wb.create_sheet('計画と実績_重ね書き')
 B = Font(bold=True)
 
@@ -64,5 +67,38 @@ ch.set_categories(cats)
 ws.add_chart(ch, '%s%d' % (get_column_letter(len(series) + 4), r0))
 for i, w in enumerate([34, 26, 22, 20, 22] + [16] * len(series), start=1):
     ws.column_dimensions[get_column_letter(i)].width = w
+# ---- MEG（FQY1530）側 ----
+r1 = r0 + nmax + 3
+ws.cell(row=r1 - 1, column=1, value='MEG（FQY1530 MEG TO TANKYARD）の増分 [T/H]').font = B
+Qc = Q.where(Q > 5)
+meg_past = [('2020-01-30 12:00', 18), ('2020-03-24 14:00', 12), ('2020-08-30 07:00', 13),
+            ('2021-01-28 07:00', 11), ('2021-08-02 15:00', 10), ('2024-10-15 13:00', 11),
+            ('2025-05-14 08:00', 12), ('2025-08-01 09:00', 10)]
+planQ3 = [0, 2.736111, 5.472222, 8.208333]
+planQ4 = [0, 2.052083, 4.104167, 6.156250, 8.208333]
+mser = [('計画 切替前 3h', planQ3), ('計画 LERA切替後 4h', planQ4)]
+for t0, hrs in meg_past:
+    seg = Qc.loc[t0:pd.Timestamp(t0) + pd.Timedelta(hours=hrs)].ffill()
+    mser.append((pd.Timestamp(t0).strftime('%Y/%-m/%-d 実績'), list(seg.values - seg.iloc[0])))
+nmax2 = max(len(v) for _, v in mser)
+ws.cell(row=r1, column=1, value='経過時間_h').font = B
+for i in range(nmax2):
+    ws.cell(row=r1 + 1 + i, column=1, value=i)
+for j, (name, vals) in enumerate(mser):
+    ws.cell(row=r1, column=2 + j, value=name).font = B
+    for i, v in enumerate(vals):
+        c = ws.cell(row=r1 + 1 + i, column=2 + j, value=float(v))
+        c.number_format = '0.00'
+ch2 = LineChart()
+ch2.title = '増量開始からの FQY1530 増分 [T/H]'
+ch2.y_axis.title = 'FQY1530 の増分 [T/H]'
+ch2.x_axis.title = '経過時間 [h]'
+ch2.height, ch2.width = 10, 20
+d2 = Reference(ws, min_col=2, max_col=1 + len(mser), min_row=r1, max_row=r1 + nmax2)
+c2 = Reference(ws, min_col=1, min_row=r1 + 1, max_row=r1 + nmax2)
+ch2.add_data(d2, titles_from_data=True)
+ch2.set_categories(c2)
+ws.add_chart(ch2, '%s%d' % (get_column_letter(len(mser) + 4), r1))
+
 wb.save(sys.argv[2])
 print('updated', sys.argv[2])

@@ -36,9 +36,9 @@ fast_days = [d for d in fast_days if d != pd.Timestamp('2020-06-25')]
 plan3 = [7.5, 9.333111, 11.166222, 12.999333]                        # テスト後戻し(切替前) 3h
 plan4 = [7.5, 8.874833, 10.249667, 11.624500, 12.999333]             # テスト後戻し(LERA切替後) 4h
 
-fig = plt.figure(figsize=(13.5, 8.6), facecolor=SURF)
-gs = fig.add_gridspec(2, 1, height_ratios=[1.0, 1.15], hspace=0.34,
-                      left=0.065, right=0.985, top=0.90, bottom=0.075)
+fig = plt.figure(figsize=(13.5, 12.4), facecolor=SURF)
+gs = fig.add_gridspec(3, 1, height_ratios=[1.0, 1.1, 1.1], hspace=0.32,
+                      left=0.065, right=0.985, top=0.93, bottom=0.055)
 
 # ---------------- 上：どの時期か ----------------
 ax = fig.add_subplot(gs[0])
@@ -112,7 +112,49 @@ ax2.tick_params(colors=INK2, labelsize=9)
 ax2.grid(axis='y', color=MUTED, alpha=0.35, lw=0.6)
 ax2.set_axisbelow(True)
 
-fig.suptitle('EGロード（FC1402）の増量速度：今回のテスト後戻し計画は実績の範囲内か',
-             fontsize=14.5, color=INK, x=0.065, ha='left', y=0.965)
+# ---------------- 下：MEG（FQY1530）の上昇 ----------------
+Qc = Q.where(Q > 5)                       # タンクヤード切替でQ=0に落ちる時間は除外
+ax3 = fig.add_subplot(gs[2])
+ax3.set_facecolor(SURF)
+meg_past = [('2020-01-30 12:00', 18), ('2020-03-24 14:00', 12), ('2020-08-30 07:00', 13),
+            ('2021-01-28 07:00', 11), ('2021-08-02 15:00', 10), ('2024-10-15 13:00', 11),
+            ('2025-05-14 08:00', 12)]
+planQ3 = [7.625, 10.361111, 13.097222, 15.833333]
+planQ4 = [7.625, 9.677083, 11.729167, 13.781250, 15.833333]
+first = True
+for t0, hrs in meg_past:
+    seg = Qc.loc[t0:pd.Timestamp(t0) + pd.Timedelta(hours=hrs)].ffill()
+    ax3.plot(range(len(seg)), seg.values - seg.iloc[0], lw=1.8, color=MUTED, zorder=2,
+             label='過去のオンスペック中の増量' if first else None)
+    first = False
+    ax3.annotate(pd.Timestamp(t0).strftime('%-m/%-d'), xy=(len(seg) - 1, seg.iloc[-1] - seg.iloc[0]),
+                 xytext=(5, -3), textcoords='offset points', fontsize=8.5, color=INK2)
+seg = Qc.loc['2025-08-01 09:00':'2025-08-01 19:00'].ffill()
+ax3.plot(range(len(seg)), seg.values - seg.iloc[0], lw=2.6, color=BLUE, zorder=4,
+         label='2025/8/1  実績の最速  +9.2 T/H / 6h ＝ 1.52 T/H per h')
+ax3.plot(range(len(planQ3)), np.array(planQ3) - planQ3[0], lw=2.8, color=ORANGE, zorder=5,
+         marker='o', ms=7, label='計画 切替前  +8.2 T/H / 3h ＝ 2.74 T/H per h')
+ax3.plot(range(len(planQ4)), np.array(planQ4) - planQ4[0], lw=2.8, color=VIOLET, zorder=5,
+         marker='s', ms=6.5, label='計画 LERA切替後  +8.2 T/H / 4h ＝ 2.05 T/H per h')
+ax3.axhline(8.21, color=INK2, lw=0.9, ls=(0, (4, 3)), zorder=1)
+ax3.annotate('目標の増分 +8.2 T/H（MEG 7.6 → 15.8 T/H）', xy=(17.6, 8.21), xytext=(0, 6),
+             textcoords='offset points', ha='right', fontsize=9, color=INK2)
+ax3.set_xlabel('増量開始からの経過時間 [h]', fontsize=10, color=INK2)
+ax3.set_ylabel('FQY1530 の増分 [T/H]', fontsize=10, color=INK2)
+ax3.set_title('③ MEG生産量（FQY1530 MEG TO TANKYARD）の上昇：計画と実績の重ね書き',
+              fontsize=12, color=INK, loc='left', pad=10)
+ax3.legend(frameon=False, fontsize=9.5, loc='lower right')
+ax3.set_xlim(-0.3, 18)
+ax3.set_ylim(-0.6, 14.5)
+for sp in ('top', 'right'):
+    ax3.spines[sp].set_visible(False)
+for sp in ('left', 'bottom'):
+    ax3.spines[sp].set_color(MUTED)
+ax3.tick_params(colors=INK2, labelsize=9)
+ax3.grid(axis='y', color=MUTED, alpha=0.35, lw=0.6)
+ax3.set_axisbelow(True)
+
+fig.suptitle('EGロード（FC1402）とMEG生産量（FQY1530）の増量速度：今回のテスト後戻し計画は実績の範囲内か',
+             fontsize=14.5, color=INK, x=0.065, ha='left', y=0.975)
 fig.savefig(sys.argv[2], dpi=170, facecolor=SURF)
 print('saved', sys.argv[2])
