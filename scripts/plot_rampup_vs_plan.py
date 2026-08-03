@@ -81,26 +81,25 @@ past = [('2020-03-09 10:00', 4), ('2020-07-27 10:00', 4), ('2021-01-06 10:00', 4
 first = True
 for t0, hrs in past:
     seg = L.loc[t0:pd.Timestamp(t0) + pd.Timedelta(hours=hrs)]
-    ax2.plot(range(len(seg)), seg.values - seg.iloc[0], lw=1.8, color=MUTED, zorder=2,
+    ax2.plot(range(len(seg)), seg.values, lw=1.8, color=MUTED, zorder=2,
              label='過去のオンスペック中の増量' if first else None)
     first = False
-    ax2.annotate(pd.Timestamp(t0).strftime('%-m/%-d'),
-                 xy=(len(seg) - 1, seg.iloc[-1] - seg.iloc[0]), xytext=(5, -3),
-                 textcoords='offset points', fontsize=8.5, color=INK2)
+    ax2.annotate(pd.Timestamp(t0).strftime('%-m/%-d'), xy=(len(seg) - 1, seg.iloc[-1]),
+                 xytext=(5, -3), textcoords='offset points', fontsize=8.5, color=INK2)
 seg = L.loc['2025-08-01 09:00':'2025-08-01 17:00']
-ax2.plot(range(len(seg)), seg.values - seg.iloc[0], lw=2.6, color=BLUE, zorder=4,
-         label='2025/8/1  直近の段階増量  +6.1 T/H / 5h')
-ax2.plot(range(len(plan3)), np.array(plan3) - plan3[0], lw=2.8, color=ORANGE, zorder=5,
-         marker='o', ms=7, label='計画 テスト後戻し(切替前)  +5.5 T/H / 3h ＝ 1.83 T/H per h')
-ax2.axhline(5.5, color=INK2, lw=0.9, ls=(0, (4, 3)), zorder=1)
-ax2.annotate('目標の増分 +5.5 T/H（EOフィード 7.5 → 13.0 T/H）', xy=(11.4, 5.5),
-             xytext=(0, 6), textcoords='offset points', ha='right', fontsize=9, color=INK2)
+ax2.plot(range(len(seg)), seg.values, lw=2.6, color=BLUE, zorder=4,
+         label='2025/8/1  直近の段階増量  11.6 → 17.7 T/H を5時間（1.02 T/H per h）')
+ax2.plot(range(len(plan3)), np.array(plan3), lw=2.8, color=ORANGE, zorder=5, marker='o', ms=7,
+         label='計画 テスト後戻し(切替前)  7.5 → 13.0 T/H を3時間（1.83 T/H per h）')
+ax2.axhline(13.0, color=ORANGE, lw=0.9, ls=(0, (4, 3)), zorder=1)
+ax2.annotate('計画の到達値 13.0 T/H', xy=(11.4, 13.0), xytext=(0, 5), textcoords='offset points',
+             ha='right', fontsize=9, color=ORANGE)
 ax2.set_xlabel('増量開始からの経過時間 [h]', fontsize=10, color=INK2)
-ax2.set_ylabel('FC1402 の増分 [T/H]', fontsize=10, color=INK2)
-ax2.set_title('② 今回計画と、オンスペック中の増量実績の重ね書き', fontsize=12, color=INK, loc='left', pad=10)
+ax2.set_ylabel('FC1402  R-1401 EO FEED [T/H]', fontsize=10, color=INK2)
+ax2.set_title('② EOフィード（FC1402）：計画と、オンスペック中の増量実績の重ね書き（縦軸は流量そのもの）', fontsize=12, color=INK, loc='left', pad=10)
 ax2.legend(frameon=False, fontsize=9.5, loc='lower right')
 ax2.set_xlim(-0.2, 11.5)
-ax2.set_ylim(-0.4, 9.6)
+ax2.set_ylim(6, 21.5)
 for sp in ('top', 'right'):
     ax2.spines[sp].set_visible(False)
 for sp in ('left', 'bottom'):
@@ -120,26 +119,26 @@ planQ3 = [7.625, 10.361111, 13.097222, 15.833333]
 first = True
 for t0, hrs in meg_past:
     seg = Qc.loc[t0:pd.Timestamp(t0) + pd.Timedelta(hours=hrs)].ffill()
-    ax3.plot(range(len(seg)), seg.values - seg.iloc[0], lw=1.8, color=MUTED, zorder=2,
+    ax3.plot(range(len(seg)), seg.values, lw=1.8, color=MUTED, zorder=2,
              label='過去のオンスペック中の増量' if first else None)
     first = False
-    ax3.annotate(pd.Timestamp(t0).strftime('%-m/%-d'), xy=(len(seg) - 1, seg.iloc[-1] - seg.iloc[0]),
+    ax3.annotate(pd.Timestamp(t0).strftime('%-m/%-d'), xy=(len(seg) - 1, seg.iloc[-1]),
                  xytext=(5, -3), textcoords='offset points', fontsize=8.5, color=INK2)
 seg = Qc.loc['2025-08-01 09:00':'2025-08-01 19:00'].ffill()
-ax3.plot(range(len(seg)), seg.values - seg.iloc[0], lw=2.6, color=BLUE, zorder=4,
-         label='2025/8/1  実績の最速  +9.2 T/H / 6h ＝ 1.52 T/H per h')
-ax3.plot(range(len(planQ3)), np.array(planQ3) - planQ3[0], lw=2.8, color=ORANGE, zorder=5,
-         marker='o', ms=7, label='計画 テスト後戻し(切替前)  +8.2 T/H / 3h ＝ 2.74 T/H per h')
-ax3.axhline(8.21, color=INK2, lw=0.9, ls=(0, (4, 3)), zorder=1)
-ax3.annotate('目標の増分 +8.2 T/H（MEG 7.6 → 15.8 T/H）', xy=(17.6, 8.21), xytext=(0, 6),
-             textcoords='offset points', ha='right', fontsize=9, color=INK2)
+ax3.plot(range(len(seg)), seg.values, lw=2.6, color=BLUE, zorder=4,
+         label='2025/8/1  実績の最速  12.7 → 21.9 T/H を6時間（1.52 T/H per h）')
+ax3.plot(range(len(planQ3)), np.array(planQ3), lw=2.8, color=ORANGE, zorder=5, marker='o', ms=7,
+         label='計画 テスト後戻し(切替前)  7.6 → 15.8 T/H を3時間（2.74 T/H per h）')
+ax3.axhline(15.83, color=ORANGE, lw=0.9, ls=(0, (4, 3)), zorder=1)
+ax3.annotate('計画の到達値 15.8 T/H', xy=(18.6, 15.83), xytext=(0, 5), textcoords='offset points',
+             ha='right', fontsize=9, color=ORANGE)
 ax3.set_xlabel('増量開始からの経過時間 [h]', fontsize=10, color=INK2)
-ax3.set_ylabel('FQY1530 の増分 [T/H]', fontsize=10, color=INK2)
-ax3.set_title('③ MEG生産量（FQY1530 MEG TO TANKYARD）の上昇：計画と実績の重ね書き',
+ax3.set_ylabel('FQY1530  MEG TO TANKYARD [T/H]', fontsize=10, color=INK2)
+ax3.set_title('③ MEG生産量（FQY1530）：計画と、オンスペック中の増量実績の重ね書き（縦軸は流量そのもの）',
               fontsize=12, color=INK, loc='left', pad=10)
 ax3.legend(frameon=False, fontsize=9.5, loc='lower right')
 ax3.set_xlim(-0.3, 19)
-ax3.set_ylim(-0.6, 14.5)
+ax3.set_ylim(6, 38)
 for sp in ('top', 'right'):
     ax3.spines[sp].set_visible(False)
 for sp in ('left', 'bottom'):
